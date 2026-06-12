@@ -1,6 +1,13 @@
+(*  Title:   Continuation.thy
+    Author:  Andreas Andreakis
+    SPDX-License-Identifier: BSD-3-Clause
+*)
+
 theory Continuation
   imports Virtual_Cut
 begin
+
+section \<open>Source-side continuation and restriction of virtual cuts\<close>
 
 text \<open>
   Source-side continuation and sub-scope restriction of virtual cuts
@@ -26,13 +33,19 @@ text \<open>
   composes with the existing ladder without re-opening the abstract
   run model. An accessor-level corollary lifts continuation onto an
   accepted certificate's clean prefix; a whole-table instance
-  specialises continuation to @{text "K = UNIV"}.
+  specializes continuation to @{text "K = UNIV"}.
 
   Every theorem conclusion is an @{const Apply}-against-@{const Src}
   equality: continuation is a source-side replay-equality statement,
   not a destination-state, delivery, or sink claim. Nothing here
   asserts that an extended certificate is accepted by the verifier,
   and nothing here asserts downstream repair.
+
+  In the companion fixture theories (@{text Continuation_Fixtures_Core}
+  and @{text Continuation_Fixtures_Inst}) the @{text l7_} /
+  @{text l7f_} / @{text fix_l7_} prefixes tag the continuation fixture
+  family (historically the seventh fixture layer); the prefix does not
+  denote a model layer.
 
   Paper "Source-Side Continuation and Restriction of Virtual Cuts".
 \<close>
@@ -225,7 +238,7 @@ text \<open>
   per-key @{const Apply}-against-@{const Src} reasoning the
   continuation theorem performs: it lets that proof identify the
   @{text k}-events of @{text \<delta>} with the interval segment
-  @{text Src_interval_decomposition} characterises.
+  @{text Src_interval_decomposition} characterizes.
 \<close>
 
 lemma cdc_segment_between_event_key_filter:
@@ -255,8 +268,9 @@ subsection \<open>Layer 0 --- replay-append and source-state interval lemmas\<cl
 text \<open>
   Replaying a concatenation @{text "\<sigma> @ \<delta>"} is replaying @{text \<delta>}
   from the state @{term "Apply \<sigma>"}. Immediate from @{const Apply}'s
-  left-fold definition; it lets a continuation segment be replayed on
-  top of the replay state an existing virtual cut already reached.
+  left-fold definition. Recorded as the obvious replay-append API
+  fact; the continuation proof itself works per key (through the
+  per-key filter lemmas) and does not consume it.
 \<close>
 
 lemma Apply_append:
@@ -264,7 +278,7 @@ lemma Apply_append:
   unfolding Apply_def by (simp add: foldl_append)
 
 text \<open>
-  The load-bearing Layer 0 lemma for continuation. It characterises
+  The load-bearing Layer 0 lemma for continuation. It characterizes
   the source state at the later frontier @{text f'} from the source
   state at the earlier frontier @{text f} and the key's own source
   events inside the interval @{text "(f, f']"}.
@@ -278,7 +292,8 @@ text \<open>
   entry of @{text segk}.
 
   The proof case-splits on whether such an interval event exists,
-  using @{text src_characterized_by_latest_event} and the
+  using @{text src_eq_when_no_later_src_event_for_k}, direct
+  unfolding of @{const Src}, and the
   @{type src_coord} linear order. The empty case needs only
   @{text "f \<le> f'"} and linear-order totality. The non-empty case
   uses WF-H1 to place the interval events after the
@@ -571,7 +586,7 @@ text \<open>
   The @{text "K = UNIV"} instance of continuation. When replay of
   @{text \<sigma>} reaches the source state at @{text f} on \<^emph>\<open>every\<close> key
   --- an unrestricted equality, as the Layer 4 whole-table
-  specialisation yields --- appending the full CDC segment for
+  specialization yields --- appending the full CDC segment for
   @{text "(f, f']"} on every key reaches the source state at
   @{text f'}.
 
@@ -655,6 +670,13 @@ text \<open>
 
   Paper "Source-Side Continuation and Restriction of Virtual Cuts" /
   "Corollary (continuation over an accepted certificate)".
+
+  The @{text wellformed_src_history} premise is stated explicitly so
+  the theorem reads self-contained; under the locale it is also
+  derivable from acceptance plus faithfulness (acceptance forces
+  @{text checker_run_wellformed} on the evidence run, whose first
+  conjunct is wellformedness of the recorded history, and
+  faithfulness identifies that history with @{text H}).
 \<close>
 
 context layer3_checker_substrate

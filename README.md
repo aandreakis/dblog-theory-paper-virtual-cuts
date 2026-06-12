@@ -32,68 +32,104 @@ is to guard against drift between the paper and the formalization.
 The development is built and checked with **Isabelle2025-2**
 (https://isabelle.in.tum.de/). It depends only on `HOL-Library` from the
 Isabelle distribution; no Archive of Formal Proofs entries are required.
+(The session's `chapter AFP` marker in `ROOT` reflects its packaging for
+a possible Archive submission; the build is fully standalone.)
 
 From this directory:
 
     isabelle build -d . DBLog_Virtual_Cuts
 
-The session checks all seventeen theories `sorry`-free in a few seconds.
+The session checks all thirty-seven theories `sorry`-free and generates
+the entry document (PDF), which requires a working LaTeX toolchain. The
+session's `ROOT` pins `document = pdf`, and session options take
+precedence over command-line `-o` options, so `-o document=false` does
+not disable it; to check the proofs without LaTeX, remove the
+`document = pdf, document_output = "output"` options from `ROOT`
+before building.
 
 ## Contents
 
-The development is layered: each layer builds on the ones before it. Six
-theories carry the core definitions and the main theorems, and one further
-theory adds the post-core continuation extension on top of the core
-ladder.
+The development is layered: each layer builds on the ones before it.
+Fourteen theories carry the definitions, locale infrastructure, and main
+theorems; the remaining twenty-three are constructed witnesses and
+fixtures, closing with a non-vacuity gate.
 
 | Layer | Theory | Content |
 |-------|--------|---------|
-| 0 | `Source_History` | the source database and its history of states |
-| 0 | `Replay` | the replay / apply substrate for change events |
-| 0 | `Scope` | key scopes |
-| 1 | `DBLog_Run` | the abstract DBLog run — chunk plan, clean prefix, and the `wellformed_dblog_run` predicate |
-| 2–3 | `Virtual_Cut` | the virtual cut and the Layer 2 result; the certificate, its verifier, and Layer 3 certificate soundness |
-| 4 | `Layer4_Whole_Table` | the whole-table specialization |
+| 0 | `Source_History` | the source database: source coordinates (`src_coord`), source events, the append-only source history, frontiers, and the source state `Src` at a frontier |
+| 0 | `Replay` | replay events (CDC events and chunk-read refreshes) and the `Apply` replay function |
+| 0 | `Scope` | key-scope restriction of a per-key state |
+| 0 | `Source_Coordinates` | named concrete source coordinates via the embedding `coord_of_nat` of `nat` into `src_coord`, with order, distinctness, and injectivity lemmas proved by `nat` arithmetic (shared by the witnesses and fixtures) |
+| 0–1 | `DBLog_Run_Core` | carrier-independent core: chunk-read records, the canonical clean-prefix construction and its normalisation lemmas, and the per-key / per-coordinate source-history slicing helpers |
+| 1 | `DBLog_Run` | the concrete DBLog run — a single-constructor datatype with named selectors, chunk identifiers being plain naturals; the run and chunk-plan accessors as ordinary definitions; the distinct chunk enumeration `chunks_list` with its set and distinctness lemmas proved; the `wellformed_dblog_run` predicate |
+| 1 | `DBLog_Run_Substrate` | the `dblog_run_substrate` locale — the run/chunk accessor interface over abstract type variables — together with its canonical interpretation at the concrete run accessors |
+| 2 | `DBLog_Run_Substrate_Layer2` | the Layer 2 clean-prefix lemmas and the run-side soundness theorem, proved inside the run-substrate locale |
+| 2–4 | `Virtual_Cut_Core` | the carrier-independent virtual-cut-state core and the pure Layer 4 anchor-domain / table-scope definitions with their bridge lemmas |
+| 2–3 | `Virtual_Cut` | the virtual cut and the Layer 2 result; the concrete certificate (scope, frontier, clean prefix), the evidence carrier (which records the run backing the certificate), and the three-way verifier `verify` (`Accept` / `Reject` / `Unsupported`); the decomposition of run wellformedness into a checker-checkable half (`checker_run_wellformed`) and an external observation half (`run_reflects_source`), rejoined by the proved lemma `wellformed_dblog_run_decompose`; the `layer3_checker_substrate` locale and the Layer 3 certificate-soundness theorems |
+| 3–4 | `DBLog_Cert_Substrate` | the `dblog_cert_substrate` / `dblog_checker_substrate` locale hierarchy — the certificate side over abstract carriers — with locale-level versions of the Layer 3/4 theorems |
+| 3–4 | `DBLog_Cert_Substrate_Inst` | the canonical concrete interpretation of the certificate substrate, plus locale-level continuation corollaries |
+| 4 | `Layer4_Whole_Table` | the whole-table anchor-domain specialization |
 | post-core extension | `Continuation` | source-side continuation across frontiers and sub-scope restriction of virtual cuts |
 
-The remaining ten theories support the core development and the
-continuation extension. They are not required to state or prove the main
-theorems; they exercise the definitions and guard against vacuity:
+One modelling note: the run- and certificate-layer theorems (the core
+ladder and the accepted-certificate continuation result) carry a
+`linorder` (linear-order) hypothesis on the key type `'k`. It enters in
+the canonical clean-prefix construction (`DBLog_Run_Core`), which
+enumerates each chunk-read domain with `sorted_list_of_set` and
+interleaves the emitted events by source coordinate with a stable
+`sort_key` — making "for each key in the chunk domain" a deterministic
+enumeration, as the paper implicitly assumes; `clean_prefix_of`
+propagates the constraint upward. The four state-level continuation /
+restriction results (`virtual_cut_state_continuation`,
+`virtual_cut_state_restrict_scope`, `whole_table_state_continuation`,
+`virtual_cut_restrict_to_subscope`) are constraint-free. Database
+primary keys are totally ordered in practice, so the hypothesis does not
+narrow the intended interpretation.
 
-- `Layer01_Virtual_Cut_Example` — a fully worked positive virtual-cut
-  example.
-- `Layer01_Witnesses`, `Layer01_Witness_Topics`, `Layer3_Witnesses`,
-  `Layer4_Witnesses` — positive witnesses that the predicates are
-  inhabited. The Layer 3/4 witnesses additionally pin the abstract
-  certificate / evidence / raw-observation interface with fixture axioms;
-  see *Witness and fixture methodology* below.
-- `Layer01_Fixtures`, `Layer2_Fixtures`, `Layer3_Fixtures`,
-  `Layer4_Fixtures` — counterexample and boundary fixtures showing that the
-  wellformedness clauses and certificate checks are not trivially satisfied.
-- `Continuation_Fixtures` — the positive continuation witness and the
-  load-bearing and boundary fixtures for the continuation extension.
+The remaining twenty-three theories are not required to state or prove
+the main theorems; they exercise the definitions and guard against
+vacuity. They come in families of up to three theories: `*_Core` holds
+carrier-independent data (named coordinates, base states, source
+histories, expected-value lemmas); `*_Model` exhibits a small concrete
+model — datatype or numeric carriers with definitional accessors realizing
+exactly the values the witness needs; `*_Inst` interprets the substrate
+locales at that model and proves the witness or fixture facts there. Some
+families share a model or interpret directly, so not every family has all
+three pieces.
 
-### Witness and fixture methodology
+- `Layer01_Witnesses_{Core,Model,Inst}` — the minimum-viable wellformed-run positive witness.
+- `Layer01_Witness_Topics_{Core,Model,Inst}` — two further positive run witnesses over different base-state and source-history shapes.
+- `Layer01_Virtual_Cut_Example_{Core,Model,Inst}` — the paper's running example (the accounts-table backfill) as a fully worked virtual cut.
+- `Layer01_Fixtures_{Core,Model,Inst}` — Layer 0/1 negative and boundary fixtures: runs violating individual wellformedness clauses are rejected.
+- `Layer2_Fixtures_{Core,Inst}` — canonical clean-prefix structural and frontier boundary fixtures; the `Inst` reuses the Layer 0/1 models.
+- `Layer4_Witnesses_Core` and `Layer3_Witnesses_Inst` — the Layer 3 accepted-certificate and Layer 4 whole-table positive witnesses: anchor data in the `Core`, one shared interpretation proving both.
+- `Layer3_Fixtures_{Core,Inst}` — checker fixtures, including wrong-base-state and wrong-history scenarios with unfaithful source observation.
+- `Layer4_Fixtures_{Core,Inst}` — boundary and counterexample fixtures for the whole-table specialization.
+- `Continuation_Fixtures_{Core,Inst}` — the positive continuation witness and the load-bearing and boundary fixtures of the extension.
+- `Public_Checker_Witness` — the closing non-vacuity gate (below).
 
-The witness and fixture theories introduce fresh constants for the abstract
-run, chunk, certificate, and evidence vocabulary with `axiomatization` and pin
-their accessor values. They also introduce fresh source-coordinate constants
-with explicit strict-order axioms (for example coordinates `c1_w` and `c2_w`
-fixed above the base coordinate `c0`); these coordinate axioms are model-shape
-assumptions about the source-coordinate order, not accessor pinning. The
-theories are fixture instances that exercise the definitions and theorem
-surfaces — model-shape witnesses for the abstract interface — rather than
-executable constructions from closed-form data. Their non-vacuity and rejection
-claims hold relative to both the accessor-pinning fixture axioms and the
-source-coordinate order axioms.
+### Constructed witnesses and fixtures
 
-These fixture and witness axiomatizations are confined to the witness and
-fixture theories. The four core-ladder theorems and the five continuation-
-extension theorems do not depend on them: their statements and proofs use
-only the abstract `consts` / `typedecl` interface plus two modeling-level
-axiomatizations declared with the abstract model itself — the source-
-coordinate linear order with least element `c0` in `Source_History`, and
-the distinct chunk enumeration `chunks_list` in `DBLog_Run`.
+Every witness and fixture fact is established constructively: a concrete
+model is exhibited as closed-form data, the substrate locales are
+interpreted at it (or the facts are proved directly over the public
+carriers), and the non-vacuity, acceptance, and rejection claims are
+proved at that instance by computation. Nothing in the session is
+axiomatized — there is no `axiomatization`, `typedecl`, or `consts`
+declaration. The only `typedef` is the source coordinate type,
+`typedef src_coord = "UNIV :: nat set"` in `Source_History` — a
+conservative extension over a provably nonempty set, with its `linorder`
+and `order_bot` instances proved, not assumed. The Isabelle kernel
+therefore checks every fact in the development down to definitions; no
+claim rests on a postulated model shape.
+
+The final theory, `Public_Checker_Witness`, is the non-vacuity gate: it
+exhibits a concrete certificate / evidence pair over the public carriers
+that `verify` genuinely accepts, a deployment environment under which
+`faithful_source_observation` genuinely holds, and fires all nine main
+theorems at such concrete witnesses. Two closing exhibits — an accepted
+pair whose observation is unfaithful, and faithful evidence the verifier
+rejects — show the two headline premises are independent and not vacuous.
 
 ## Main results
 
@@ -127,9 +163,12 @@ agree with the certificate, under faithful source observation. Their
 conditions are the hypotheses named in each statement — verifier
 acceptance, faithful source observation, and, for the whole-table result, a
 whole-table claim scope — *together with* these checker-substrate
-obligations. All of these correspond to the Deployment obligations and the
-External observation assumption discussed in the paper: the formalization
-makes them explicit hypotheses; it does not discharge them.
+obligations. The obligations are proved for the concrete verifier in
+`Virtual_Cut`, and `Public_Checker_Witness` exercises them at an accepted
+pair, so the locale hypotheses are satisfiable. All of these correspond to
+the Deployment obligations and the External observation assumption
+discussed in the paper: the formalization makes them explicit hypotheses;
+it does not discharge them.
 
 ### Continuation extension
 
@@ -137,8 +176,8 @@ The continuation extension is the promoted source-side fragment of the
 "certificate algebra" future-work catalog (see the paper's "Source-Side
 Continuation and Restriction of Virtual Cuts" section). It is built source-side
 over the core ladder: each result is an `Apply`-against-`Src` equality, and
-the proofs compose with Layer 2 and Layer 3 without re-opening the abstract
-DBLog run model.
+the proofs compose with Layer 2 and Layer 3 without re-opening the DBLog
+run model.
 
 - **`virtual_cut_state_continuation`** — primary continuation theorem. On a
   wellformed source history, a virtual cut at frontier `f` on scope `K`
@@ -155,10 +194,11 @@ DBLog run model.
   keys never certified.
 
 - **`whole_table_state_continuation`** — whole-table instance of continuation.
-  When `Apply σ = Src b0 H f` holds unrestricted — the all-keys equality the
-  Layer 4 specialisation yields — appending the full CDC segment for
-  `(f, f']` on `UNIV` reaches the source state at `f'` on every key. A scoped
-  continuation does not become whole-table for free.
+  On a wellformed source history, when `Apply σ = Src b0 H f` holds
+  unrestricted — the all-keys equality the Layer 4 specialisation yields —
+  appending the full CDC segment for `(f, f']` on `UNIV` reaches the source
+  state at `f'` on every key. A scoped continuation does not become
+  whole-table for free.
 
 - **`virtual_cut_restrict_to_subscope`** — certificate-accessor sub-scope
   restriction. An accepted certificate's virtual cut, read through its
@@ -186,17 +226,19 @@ delivery, sink, or extended-certificate-acceptance claim.
 
 ## Release metadata
 
-For the artifact deposited under the paper's DOI, the verification
-environment is pinned as follows.
+For the artifact as deposited on Zenodo, the verification environment is
+pinned as follows.
 
-- **Session.** `DBLog_Virtual_Cuts`, 17 theories (see *Contents* above),
-  checked `sorry`-free.
+- **Session.** `DBLog_Virtual_Cuts`, 37 theories (see *Contents* above), checked `sorry`-free.
 - **Prover.** Isabelle2025-2 (`ISABELLE_IDENTIFIER=Isabelle2025-2`),
   using `HOL-Library` only — no Archive of Formal Proofs entry.
-- **Release identification.** Before depositing or citing the artifact as
-  a release, create the signed release tag for the exact checked commit
-  and record the commit hash, tag name, release date, and Zenodo DOI with
-  the tag and in the Zenodo deposit.
+- **Release identification.** Version 2.0, released 2026-06-12; git tag
+  `v2.0` on the public repository
+  (<https://github.com/aandreakis/dblog-theory-paper-virtual-cuts>).
+  Archived on Zenodo: version DOI 10.5281/zenodo.20652511, under concept
+  DOI 10.5281/zenodo.20389696 (resolves to the latest version).
+  Predecessor: v1.0 (version DOI 10.5281/zenodo.20389697; the 17-theory
+  pre-AFP-grade surface, frozen).
 
 A representative clean-build transcript — `isabelle build -c -d .
 DBLog_Virtual_Cuts`, run from this directory; elapsed times are
@@ -204,8 +246,11 @@ machine-dependent:
 
     Cleaned DBLog_Virtual_Cuts
     Running DBLog_Virtual_Cuts ...
-    Finished DBLog_Virtual_Cuts (0:00:13 elapsed time, 0:00:35 cpu time, factor 2.65)
-    0:00:18 elapsed time, 0:00:35 cpu time, factor 1.93
+    Preparing DBLog_Virtual_Cuts/document ...
+    Finished DBLog_Virtual_Cuts/document (0:00:10 elapsed time)
+    Document at ".../output/document.pdf"
+    Finished DBLog_Virtual_Cuts (0:00:11 elapsed time, 0:00:46 cpu time, factor 4.16)
+    0:00:25 elapsed time, 0:00:46 cpu time, factor 1.80
 
 The build exits with status 0, and no theory uses `sorry` or `oops`.
 

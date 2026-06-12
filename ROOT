@@ -1,4 +1,4 @@
-chapter "DBLog"
+chapter AFP
 
 session DBLog_Virtual_Cuts = "HOL-Library" +
   description "
@@ -13,42 +13,78 @@ session DBLog_Virtual_Cuts = "HOL-Library" +
     Layer 2 proves that a wellformed run replays to the source state at
     its frontier on its scope. Layer 3 introduces the certified virtual
     cut and, inside the layer3_checker_substrate locale, proves that
-    verifier acceptance and faithful source observation --- together with
-    the locale's checker-substrate obligations --- imply that the
-    certificate replays to the same source state. Layer 4 specialises that
-    locale result to whole-table claims. The post-core continuation
+    verifier acceptance and faithful source observation, together with
+    the locale's checker-substrate obligations, imply that the
+    certificate replays to the same source state. Layer 4 specialises
+    that locale result to whole-table claims. The post-core continuation
     extension adds two primary source-side facts on top of the core
-    ladder --- continuation across frontiers extends a virtual cut at a
+    ladder: continuation across frontiers extends a virtual cut at a
     frontier to one at any later frontier by appending the faithful
     in-scope CDC segment for the half-open interval, and sub-scope
-    restriction restricts a virtual cut on a key scope to any sub-scope ---
+    restriction restricts a virtual cut on a key scope to any sub-scope;
     together with whole-table and accepted-certificate corollaries.
+
+    The development is axiom-free: it contains no axiomatization,
+    typedecl, or consts declaration, and its only typedef is a
+    conservative copy of the naturals for source coordinates. Witnesses
+    and fixtures are constructed models with locale interpretations, and
+    the closing theory Public_Checker_Witness exercises every main
+    theorem at concrete witnesses (the certificate-layer results at
+    genuinely accepted certificates), so none of the headline results
+    is vacuously true. The key type carries a linorder
+    hypothesis in the run/certificate-layer theorems (it enters through
+    the deterministic canonical clean-prefix construction); the four
+    state-level continuation/restriction results are constraint-free.
 
     Every theorem is conditional on the premises stated in its statement;
     the machine check does not discharge the deployment obligations or the
     external-observation assumption that a real deployment must establish.
+    The wellformedness predicate's WF7 clean-prefix CDC-coherence conjunct
+    is provably redundant (the lemma wf7_clean_prefix_cdc_coherence_redundant
+    in DBLog_Run establishes it for every run) and is retained in the
+    predicate body for documentation.
 
-    All theories build sorry-free. The wellformedness predicate's WF7
-    clean-prefix CDC-coherence conjunct is provably redundant --- the lemma
-    wf7_clean_prefix_cdc_coherence_redundant (in Layer01_Fixtures)
-    establishes it for every run --- and is retained in the predicate body
-    for documentation.
+    Licensed under the BSD 3-Clause license (SPDX header on every theory).
   "
+  options [timeout = 600, document = pdf, document_output = "output"]
   theories
     Source_History
+    Source_Coordinates
     Replay
     Scope
+    DBLog_Run_Core
+    Virtual_Cut_Core
     DBLog_Run
+    DBLog_Run_Substrate
+    DBLog_Run_Substrate_Layer2
     Virtual_Cut
-    Layer01_Witnesses
-    Layer01_Virtual_Cut_Example
-    Layer01_Witness_Topics
-    Layer01_Fixtures
-    Layer2_Fixtures
-    Layer3_Witnesses
-    Layer3_Fixtures
+    Layer01_Witnesses_Core
+    Layer01_Witness_Topics_Core
+    Layer01_Virtual_Cut_Example_Core
+    Layer4_Witnesses_Core
+    Layer01_Fixtures_Core
+    Layer3_Fixtures_Core
+    Layer4_Fixtures_Core
+    Layer2_Fixtures_Core
+    Layer01_Virtual_Cut_Example_Model
+    Layer01_Virtual_Cut_Example_Inst
     Layer4_Whole_Table
-    Layer4_Witnesses
-    Layer4_Fixtures
     Continuation
-    Continuation_Fixtures
+    Continuation_Fixtures_Core
+    Layer01_Witnesses_Model
+    Layer01_Witnesses_Inst
+    Layer01_Witness_Topics_Model
+    Layer01_Witness_Topics_Inst
+    Layer01_Fixtures_Model
+    DBLog_Cert_Substrate
+    DBLog_Cert_Substrate_Inst
+    Layer3_Witnesses_Inst
+    Layer01_Fixtures_Inst
+    Layer2_Fixtures_Inst
+    Layer3_Fixtures_Inst
+    Layer4_Fixtures_Inst
+    Continuation_Fixtures_Inst
+    Public_Checker_Witness
+  document_files
+    "root.tex"
+    "root.bib"

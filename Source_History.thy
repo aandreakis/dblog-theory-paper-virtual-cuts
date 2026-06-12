@@ -1,6 +1,13 @@
+(*  Title:   Source_History.thy
+    Author:  Andreas Andreakis
+    SPDX-License-Identifier: BSD-3-Clause
+*)
+
 theory Source_History
   imports Main
 begin
+
+section \<open>Layer 0: source coordinates, histories, and the source state\<close>
 
 text \<open>
   Layer 0 source-history substrate.
@@ -9,11 +16,12 @@ text \<open>
 
     \<^item> @{text src_coord}: source-side ordering coordinate
         (commit position / LSN / monotone source-side timestamp);
-    \<^item> @{text src_le}: source-coordinate ordering relation,
-        axiomatized as a linear (total) order with a least element
-        @{text c0}, over a nontrivial coordinate space (at least one
-        coordinate is distinct from @{text c0});
-    \<^item> @{text c0}: the named \<^emph>\<open>base coordinate\<close> -- the least
+    \<^item> @{text src_le}: source-coordinate ordering relation ---
+        a linear (total) order with a least element @{text c0}, over a
+        nontrivial coordinate space (at least one coordinate is distinct
+        from @{text c0}); realized conservatively (see below), not
+        axiomatized;
+    \<^item> @{text c0}: the named \<^emph>\<open>base coordinate\<close> --- the least
         element under @{text src_le}; a named constant, not a Hilbert
         choice or a locale parameter;
     \<^item> @{text src_lt}: derived strict relation
@@ -26,11 +34,11 @@ text \<open>
     \<^item> @{text frontier}: a chosen source-coordinate prefix marker
         (a @{text src_coord});
     \<^item> @{text source_pos_order}: source-position relation \<^emph>\<open>on
-        valid indices\<close> of a source history -- a relation on indices
+        valid indices\<close> of a source history --- a relation on indices
         rather than on items, so two indices carrying identical
         @{text "(c, e)"} pairs remain distinguishable;
     \<^item> @{text latest_src_event}: latest-event-by-key, returning
-        @{text "nat option"} -- an \<^emph>\<open>occurrence index\<close> of
+        @{text "nat option"} --- an \<^emph>\<open>occurrence index\<close> of
         @{text H};
     \<^item> @{text wellformed_src_history}: source-history wellformedness
         predicate (paper @{text "wellformed-src-history H"} with
@@ -43,9 +51,11 @@ text \<open>
   @{text Apply}, @{text apply_step}, @{text Src},
   @{text latest_src_event}, @{text source_pos_order},
   @{text wellformed_src_history}, @{text src_lt}, and
-  @{text cdc_lift} are real definitions. Only @{text src_le} and
-  @{text c0} are axiomatized, because they carry the
-  source-coordinate order axioms.
+  @{text cdc_lift} are real definitions. @{text src_coord} itself is a
+  conservative @{command typedef} copy of @{typ nat}, and @{text src_le}
+  / @{text c0} are ordinary definitions over it, so the development uses
+  \<^emph>\<open>no\<close> @{command axiomatization}; the source-coordinate order
+  properties are derived lemmas (see the next subsection).
 
   Run accessors (in @{text DBLog_Run}) are written with an
   @{text "_of"} suffix --- @{text "scope_of(R)"},
@@ -57,36 +67,68 @@ text \<open>
 
 subsection \<open>Source coordinates and the base coordinate\<close>
 
-typedecl src_coord
+text \<open>
+  @{text src_coord} is realized \<^emph>\<open>conservatively\<close> as a named copy
+  of @{typ nat}: a @{command typedef} over @{term "UNIV :: nat set"}, so
+  no @{command axiomatization} is needed and the type is consistent by
+  construction. The source-coordinate order @{text src_le} and the base
+  coordinate @{text c0} are ordinary definitions over the representation
+  --- @{text "src_le c c' \<longleftrightarrow> Rep_src_coord c \<le> Rep_src_coord c'"} and
+  @{text "c0 = Abs_src_coord 0"} --- and the order properties
+  (@{text src_le_refl} / @{text src_le_antisym} / @{text src_le_trans} /
+  @{text src_le_total} / @{text c0_least}) together with non-triviality
+  (@{text src_coord_nontrivial}) are \<^emph>\<open>derived lemmas\<close> (not axioms),
+  under the names and statements the downstream call sites expect.
+\<close>
 
-axiomatization
-      src_le :: "src_coord \<Rightarrow> src_coord \<Rightarrow> bool"
-  and c0     :: src_coord
-where
-      src_le_refl:    "src_le c c"
-  and src_le_antisym: "\<lbrakk>src_le c c'; src_le c' c\<rbrakk> \<Longrightarrow> c = c'"
-  and src_le_trans:   "\<lbrakk>src_le c c'; src_le c' c''\<rbrakk> \<Longrightarrow> src_le c c''"
-  and src_le_total:   "src_le c c' \<or> src_le c' c"
-  and c0_least:       "src_le c0 c"
-  and src_coord_nontrivial: "\<exists>c. c \<noteq> c0"
+typedef src_coord = "UNIV :: nat set"
+  by auto
+
+definition src_le :: "src_coord \<Rightarrow> src_coord \<Rightarrow> bool" where
+  "src_le c c' \<longleftrightarrow> Rep_src_coord c \<le> Rep_src_coord c'"
+
+definition c0 :: src_coord where
+  "c0 = Abs_src_coord 0"
+
+lemma src_le_refl: "src_le c c"
+  by (simp add: src_le_def)
+
+lemma src_le_antisym: "\<lbrakk>src_le c c'; src_le c' c\<rbrakk> \<Longrightarrow> c = c'"
+  by (metis src_le_def Rep_src_coord_inject le_antisym)
+
+lemma src_le_trans: "\<lbrakk>src_le c c'; src_le c' c''\<rbrakk> \<Longrightarrow> src_le c c''"
+  by (metis src_le_def order_trans)
+
+lemma src_le_total: "src_le c c' \<or> src_le c' c"
+  by (metis src_le_def nat_le_linear)
+
+lemma c0_least: "src_le c0 c"
+  by (simp add: src_le_def c0_def Abs_src_coord_inverse[OF UNIV_I])
+
+lemma src_coord_nontrivial: "\<exists>c. c \<noteq> c0"
+proof
+  show "Abs_src_coord 1 \<noteq> c0"
+    by (simp add: c0_def Abs_src_coord_inject[OF UNIV_I UNIV_I])
+qed
 
 text \<open>
   The strict relation @{text src_lt} is the derived shorthand
   @{text "src_lt c c' \<longleftrightarrow> src_le c c' \<and> c \<noteq> c'"}; not a separate
-  primitive. Paper "source-coordinate ordering" definition.
+  primitive; it realizes the paper's "source-coordinate ordering"
+  definition.
 \<close>
 
 definition src_lt :: "src_coord \<Rightarrow> src_coord \<Rightarrow> bool" where
   "src_lt c c' \<longleftrightarrow> src_le c c' \<and> c \<noteq> c'"
 
-subsection \<open>@{class linorder} instance for @{type src_coord}\<close>
+subsection \<open>@{class linorder} and @{class order_bot} instances for @{type src_coord}\<close>
 
 text \<open>
   @{type src_coord} is declared a @{class linorder} instance with
   @{text "(\<le>) = src_le"} and @{text "(<) = src_lt"}. The five
   linorder axioms (@{text less_le_not_le} / @{text order_refl} /
   @{text order_trans} / @{text order_antisym} / @{text linear})
-  discharge directly from the @{text "src_le_*"} axiomatization
+  discharge directly from the @{text "src_le_*"} order lemmas
   above.
 
   Rationale: the canonical-clean-prefix construction at Layer 0
@@ -98,9 +140,11 @@ text \<open>
   "source-coordinate order" as a total order); the instance makes
   it usable by Isabelle's library sorting function.
 
-  No @{class order_bot} instance is declared (although
-  @{text c0_least} would satisfy it): the body lift does not need a
-  least-element typeclass.
+  An @{class order_bot} instance is also declared, with
+  @{text "bot = c0"}: @{text c0_least} discharges the @{text bot_least}
+  obligation, making the base coordinate available as the typeclass
+  least element @{text bot}. This is part of the conservative,
+  AFP-idiomatic packaging and changes no theorem statement.
 \<close>
 
 instantiation src_coord :: linorder
@@ -125,6 +169,21 @@ instance proof
     unfolding less_eq_src_coord_def by (rule src_le_antisym)
   show "x \<le> y \<or> y \<le> x"
     unfolding less_eq_src_coord_def by (rule src_le_total)
+qed
+
+end
+
+instantiation src_coord :: order_bot
+begin
+
+definition bot_src_coord :: src_coord where
+  "bot_src_coord = c0"
+
+instance proof
+  fix a :: src_coord
+  have "src_le c0 a" by (rule c0_least)
+  thus "bot \<le> a"
+    by (simp add: bot_src_coord_def less_eq_src_coord_def)
 qed
 
 end
@@ -210,9 +269,9 @@ text \<open>
   The definition itself carries no index-validity guard: HOL list
   indexing is total, so @{text source_pos_order} is a total relation
   on all of @{typ nat}. It models source order only under explicit
-  @{text "i < length H"} and @{text "j < length H"} premises --- as
-  supplied by WF-H3 in @{text wellformed_src_history} and by every
-  downstream caller. Outside those premises its value is not intended
+  @{text "i < length H"} and @{text "j < length H"} premises ---
+  the same bounds WF-H3 in @{text wellformed_src_history} carries as
+  antecedents and every downstream caller discharges. Outside those premises its value is not intended
   to carry meaning.
 
   Paper "Source histories" section, "Definition (source-position
@@ -229,7 +288,7 @@ where
 subsection \<open>Latest source event by key (occurrence index)\<close>
 
 text \<open>
-  @{text latest_src_event} returns @{text "nat option"} -- an
+  @{text latest_src_event} returns @{text "nat option"} --- an
   \<^emph>\<open>occurrence index\<close> of @{text H} rather than the
   source-history pair itself. The reader recovers
   the underlying pair as @{text "H ! i"} when the result is
@@ -270,7 +329,7 @@ text \<open>
       of the indices, not the items).
 
   WF-H3 is automatic from @{const source_pos_order}'s definition
-  (every pair of distinct valid indices has @{text src_lt} or equality
+  together with @{text src_le} totality (every pair of distinct valid indices has @{text src_lt} or equality
   on coords, and @{text "\<le>"} on naturals is total) but the paper
   states it explicitly so downstream lemmas can cite it; the body
   below names it for cross-reference.
@@ -316,10 +375,11 @@ where
                         | Update _ v \<Rightarrow> Some v
                         | Delete _   \<Rightarrow> None))"
 
-subsection \<open>Lemma 0.3 -- Src is characterized by latest source event at frontier\<close>
+subsection \<open>Src is characterized by latest source event at frontier\<close>
 
 text \<open>
-  Paper "Layer 0 basic lemmas" / "Lemma 0.3": for any base state
+  Paper "Layer 0 and Layer 1 Lemmas" bullet "Src is characterized by
+  the latest source event at or before the frontier": for any base state
   @{text b0}, wellformed source history @{text H}, frontier
   @{text f}, and key @{text k}, the source state @{text "Src b0 H f"}
   at @{text k} is determined by @{const latest_src_event} via the
@@ -331,23 +391,25 @@ text \<open>
   The lemma is the definitional characterization of @{const Src}:
   @{const Src}'s body is the case-form below, so the lemma is the
   applied-to-@{text k} unfolding of the @{text Src_def} simp rule.
-  Its value to consumers (the
-  clean_prefix_of_per_key_replay_equals_source lemma primarily,
-  plus the Layer 2 main
-  theorem proof and Lemma 1.1) is to name the characterization
-  explicitly, so proofs can invoke it by semantic name rather than
-  by structural unfolding, and so the bridge holds stable across
-  future revisions to @{const Src}'s body (any reformulation must
-  re-prove this lemma).
+  Its role is to name the characterization explicitly as a
+  standalone, paper-aligned fact, stable across future revisions
+  to @{const Src}'s body (any reformulation must re-prove this
+  lemma). No proof in this session consumes it: downstream per-key
+  reasoning (the
+  @{text clean_prefix_of_per_key_replay_equals_source} proof, the
+  Layer 2 main theorem @{text wellformed_run_implies_virtual_cut})
+  unfolds @{text Src_def} directly
+  or goes through derived helper lemmas.
 
-  The lemma does NOT consume @{const wellformed_src_history}; the
+  The lemma does \<^emph>\<open>not\<close> consume @{const wellformed_src_history}; the
   characterization is unconditional on @{const Src}'s definition.
   Wellformedness is needed downstream by callers that reason about
-  WHICH index @{const latest_src_event} returns (for example, the
-  clean_prefix_of_per_key_replay_equals_source lemma's lift from a
+  \<^emph>\<open>which\<close> index @{const latest_src_event} returns (for example, the
+  @{text clean_prefix_of_per_key_replay_equals_source} lemma's lift from a
   clean-prefix Cdc event at coordinate
-  @{text c} to the source event at the SAME coordinate uses WF-H1
-  + WF2 to identify the index), but Lemma 0.3 itself is the
+  @{text c} to the source event at the \<^emph>\<open>same\<close> coordinate uses WF-H1
+  together with the run-level WF2 faithfulness clause to identify
+  the index), but the lemma itself is the
   characterization at the index, not its identification.
 \<close>
 

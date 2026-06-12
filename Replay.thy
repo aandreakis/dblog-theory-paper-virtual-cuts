@@ -1,6 +1,13 @@
+(*  Title:   Replay.thy
+    Author:  Andreas Andreakis
+    SPDX-License-Identifier: BSD-3-Clause
+*)
+
 theory Replay
   imports Source_History
 begin
+
+section \<open>Layer 0: replay events and the @{text Apply} semantics\<close>
 
 text \<open>
   Layer 0 replay substrate.
@@ -8,12 +15,12 @@ text \<open>
   Replay-side vocabulary:
 
     \<^item> @{text "('k, 'v) replay_event"}: replay-side event datatype
-        with two constructors -- @{text "Cdc c e"} (a replay-side
+        with two constructors --- @{text "Cdc c e"} (a replay-side
         CDC event lifted from a source event @{text e} that was
         committed at source coordinate @{text c}) and
         @{text "Refresh k m c"} (a chunk-read refresh whose
-        @{text "m :: 'v option"} records the value observed -- or
-        its absence, @{term None} -- for key @{text k} at
+        @{text "m :: 'v option"} records the value observed --- or
+        its absence, @{term None} --- for key @{text k} at
         chunk-read coordinate @{text c}). The @{text Cdc} constructor
         carries the source coordinate so that the
         canonical-clean-prefix interleaving is total at Layer 0
@@ -25,7 +32,7 @@ text \<open>
         history pair @{text "(c, e)"} to its replay-side CDC
         counterpart @{text "Cdc c e"} (paper "Auxiliary Layer 0
         definitions" / "CDC lift");
-    \<^item> @{text apply_step}: per-event step of @{text Apply} -- the
+    \<^item> @{text apply_step}: per-event step of @{text Apply} --- the
         source coordinate is carried by the constructor but is
         irrelevant to the per-key state @{text apply_step}
         produces;
@@ -107,7 +114,7 @@ where
 | "apply_step m (Cdc _ (Delete k))   = m(k := None)"
 | "apply_step m (Refresh k m_obs _)  = m(k := m_obs)"
 
-subsection \<open>Apply as left-fold of apply_step\<close>
+subsection \<open>Apply as left-fold of @{text apply_step}\<close>
 
 text \<open>
   Paper "Replay function Apply": @{text "Apply \<sigma>"} is the left-fold
@@ -143,13 +150,14 @@ fun is_refresh :: "('k, 'v) replay_event \<Rightarrow> bool" where
   "is_refresh (Cdc _ _)      = False"
 | "is_refresh (Refresh _ _ _) = True"
 
-subsection \<open>Lemma 0.1 — Apply latest-event-wins per key\<close>
+subsection \<open>Apply latest-event-wins per key\<close>
 
 text \<open>
-  Paper "Layer 0 basic lemmas" / "Lemma 0.1": for any replay-event
+  Paper "Layer 0 and Layer 1 Lemmas" bullet "Apply is
+  latest-event-wins per key": for any replay-event
   sequence @{text \<sigma>} and any key @{text k}, the value of
   @{term "Apply \<sigma>"} at @{text k} is the per-event effect of the
-  latest event in @{text \<sigma>} affecting @{text k} -- @{term "Some v"}
+  latest event in @{text \<sigma>} affecting @{text k} --- @{term "Some v"}
   for @{text "Cdc c (Insert k v)"} / @{text "Cdc c (Update k v)"} /
   @{text "Refresh k (Some v) c"}; @{term None} for
   @{text "Cdc c (Delete k)"} / @{text "Refresh k None c"};
@@ -163,7 +171,7 @@ text \<open>
         map's value at that key;
     \<^enum> @{text apply_step_at_own_key_indep}: @{term apply_step} at
         @{term "event_key e"} depends only on @{text e}, not on the
-        input map -- both constructors overwrite the per-key slot
+        input map --- both constructors overwrite the per-key slot
         outright;
     \<^enum> @{text apply_eq_apply_filter_key}: per-key projection
         (Apply at @{text k} equals Apply on the @{text k}-events
@@ -172,7 +180,7 @@ text \<open>
         non-empty list, Apply equals the per-event effect of the
         last entry.
 
-  Composes downstream at clean_prefix_of_per_key_replay_equals_source
+  Composes downstream at @{text clean_prefix_of_per_key_replay_equals_source}
   (the per-key value-equality form
   of the Layer 2 supporting clean-prefix lemma family) and Lemma
   1.1 / the Layer 2 main theorem. The factored shape states
@@ -338,10 +346,11 @@ proof -
   qed
 qed
 
-subsection \<open>Lemma 0.4 -- Replay-side CDC events faithfully lift source-side events\<close>
+subsection \<open>Replay-side CDC events faithfully lift source-side events\<close>
 
 text \<open>
-  Paper "Layer 0 basic lemmas" / "Lemma 0.4": for any source
+  Paper "Layer 0 and Layer 1 Lemmas" bullet "a replay-side Cdc event
+  has the same per-key effect as its source event": for any source
   coordinate @{text c} and any source event @{text e}, the
   replay-side CDC event @{term "cdc_lift c e"} has the same
   per-key effect under @{const apply_step} that @{text e} has
@@ -363,16 +372,16 @@ text \<open>
   per-key state @{const apply_step} produces, so the lift is
   coordinate-agnostic at the state level.
 
-  Its value to consumers (the
-  clean_prefix_of_per_key_replay_equals_source lemma primarily) is
-  to name the
-  coherence: rather than structurally unfold @{text cdc_lift_def}
-  and the @{const apply_step} clauses at every Cdc-case
-  invocation, proofs cite this lemma. The at-other-key identity
+  Its role is to name the coherence as a standalone,
+  paper-aligned fact. No proof in this session consumes it: the
+  per-key replay-equality proof
+  (@{text clean_prefix_of_per_key_replay_equals_source}) obtains
+  the same effect by direct case analysis on the
+  event. The at-other-key identity
   is already covered by @{text apply_step_at_other_key} from
-  Lemma 0.1 (the @{const event_key} of a @{text "Cdc c e"} is
-  @{term "key_of e"}; the at-other-key lemma applied to a Cdc
-  event yields the desired identity).
+  the latest-event-wins subsection above (the @{const event_key} of
+  a @{text "Cdc c e"} is @{term "key_of e"}; the at-other-key lemma
+  applied to a Cdc event yields the desired identity).
 \<close>
 
 theorem cdc_lift_coherence:
