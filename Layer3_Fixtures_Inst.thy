@@ -109,13 +109,17 @@ fun l3f_schema :: "l3f_cert \<Rightarrow> l3f_ev \<Rightarrow> bool" where
 | "l3f_schema CNoWit ENoWit = True"
 | "l3f_schema _ _ = False"
 
-text \<open>Only the mismatched alternative bundle @{term "(CAcc, EAlt)"} materializes
-  (to the degenerate run @{term "()"}); the accept-without-witness pair
-  @{term "(CNoWit, ENoWit)"} materializes to nothing, modeling a checker whose
-  acceptance is not backed by a witness run.\<close>
+text \<open>The accepted same-evidence bundle @{term "(CAcc, EAcc)"} and the
+  mismatched alternative bundle @{term "(CAcc, EAlt)"} both materialize to
+  the degenerate run @{term "()"}.  This makes the former a genuine accessor
+  mismatch fixture: materialization succeeds before accessor agreement is
+  tested.  The accept-without-witness pair @{term "(CNoWit, ENoWit)"}
+  materializes to nothing, modeling a checker whose acceptance is not backed
+  by a witness run.\<close>
 
 fun l3f_materializes :: "l3f_cert \<Rightarrow> l3f_ev \<Rightarrow> unit \<Rightarrow> bool" where
-  "l3f_materializes CAcc EAlt _ = True"
+  "l3f_materializes CAcc EAcc _ = True"
+| "l3f_materializes CAcc EAlt _ = True"
 | "l3f_materializes _ _ _ = False"
 
 text \<open>Faithful observation pins the running-example base state, history, and the
@@ -251,7 +255,9 @@ theorem layer3_two_evidence_bundle_determinacy_fixture_constructed:
   by (simp add: cf_clean_prefix_empty)
 
 theorem layer3_cert_run_coherence_mismatch_rejected_constructed:
-  "\<not> cf.cert_run_coherent CAcc EAcc ()"
+  "l3f_materializes CAcc EAcc ()
+   \<and> \<not> cf.cert_accessors_agree CAcc ()
+   \<and> \<not> cf.cert_run_coherent CAcc EAcc ()"
   unfolding cf.cert_run_coherent_def cf.cert_accessors_agree_def
   by (simp add: cf_clean_prefix_empty)
 
@@ -259,7 +265,7 @@ theorem layer3_cert_run_coherence_mismatch_rejected_constructed:
      mirroring the dual-named Layer 3 fixture-table row.\<close>
 theorem layer3_same_evidence_mismatched_run_not_coherent_constructed:
   "\<not> cf.cert_run_coherent CAcc EAcc ()"
-  by (rule layer3_cert_run_coherence_mismatch_rejected_constructed)
+  using layer3_cert_run_coherence_mismatch_rejected_constructed by blast
 
 
 subsection \<open>Faithfulness negatives\<close>

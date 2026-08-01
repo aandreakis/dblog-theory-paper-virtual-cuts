@@ -82,6 +82,7 @@ session DBLog_Virtual_Cuts = "HOL-Library" +
     Layer01_Fixtures_Inst
     Layer2_Fixtures_Inst
     Layer3_Fixtures_Inst
+    Layer3_Defect_Regressions
     Layer4_Fixtures_Inst
     Continuation_Fixtures_Inst
     Public_Checker_Witness

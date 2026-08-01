@@ -39,7 +39,7 @@ From this directory:
 
     isabelle build -d . DBLog_Virtual_Cuts
 
-The session checks all thirty-seven theories `sorry`-free and generates
+The session checks all thirty-eight theories `sorry`-free and generates
 the entry document (PDF), which requires a working LaTeX toolchain. The
 session's `ROOT` pins `document = pdf`, and session options take
 precedence over command-line `-o` options, so `-o document=false` does
@@ -51,7 +51,7 @@ before building.
 
 The development is layered: each layer builds on the ones before it.
 Fourteen theories carry the definitions, locale infrastructure, and main
-theorems; the remaining twenty-three are constructed witnesses and
+theorems; the remaining twenty-four are constructed witnesses and
 fixtures, closing with a non-vacuity gate.
 
 | Layer | Theory | Content |
@@ -86,7 +86,7 @@ restriction results (`virtual_cut_state_continuation`,
 primary keys are totally ordered in practice, so the hypothesis does not
 narrow the intended interpretation.
 
-The remaining twenty-three theories are not required to state or prove
+The remaining twenty-four theories are not required to state or prove
 the main theorems; they exercise the definitions and guard against
 vacuity. They come in families of up to three theories: `*_Core` holds
 carrier-independent data (named coordinates, base states, source
@@ -104,6 +104,7 @@ three pieces.
 - `Layer2_Fixtures_{Core,Inst}` — canonical clean-prefix structural and frontier boundary fixtures; the `Inst` reuses the Layer 0/1 models.
 - `Layer4_Witnesses_Core` and `Layer3_Witnesses_Inst` — the Layer 3 accepted-certificate and Layer 4 whole-table positive witnesses: anchor data in the `Core`, one shared interpretation proving both.
 - `Layer3_Fixtures_{Core,Inst}` — checker fixtures, including wrong-base-state and wrong-history scenarios with unfaithful source observation.
+- `Layer3_Defect_Regressions` — permanent kernel-checked regression pinning that the Layer 3 same-evidence negative control materializes its run and so genuinely reaches the accessor comparison it advertises (the version 2.1 fixture repair).
 - `Layer4_Fixtures_{Core,Inst}` — boundary and counterexample fixtures for the whole-table specialization.
 - `Continuation_Fixtures_{Core,Inst}` — the positive continuation witness and the load-bearing and boundary fixtures of the extension.
 - `Public_Checker_Witness` — the closing non-vacuity gate (below).
@@ -229,16 +230,21 @@ delivery, sink, or extended-certificate-acceptance claim.
 For the artifact as deposited on Zenodo, the verification environment is
 pinned as follows.
 
-- **Session.** `DBLog_Virtual_Cuts`, 37 theories (see *Contents* above), checked `sorry`-free.
+- **Session.** `DBLog_Virtual_Cuts`, 38 theories (see *Contents* above), checked `sorry`-free.
 - **Prover.** Isabelle2025-2 (`ISABELLE_IDENTIFIER=Isabelle2025-2`),
   using `HOL-Library` only — no Archive of Formal Proofs entry.
-- **Release identification.** Version 2.0, released 2026-06-12; git tag
-  `v2.0` on the public repository
-  (<https://github.com/aandreakis/dblog-theory-paper-virtual-cuts>).
-  Archived on Zenodo: version DOI 10.5281/zenodo.20652511, under concept
-  DOI 10.5281/zenodo.20389696 (resolves to the latest version).
-  Predecessor: v1.0 (version DOI 10.5281/zenodo.20389697; the 17-theory
-  pre-AFP-grade surface, frozen).
+- **Release identification.** Version 2.1. Changes vs 2.0, one line each:
+  (1) the same-evidence negative control in `Layer3_Fixtures_Inst` now
+  materializes its run, so the accessor-agreement comparison it advertises
+  is genuinely exercised (in the 2.0 release the control was discharged by
+  failed materialization alone; found by an external review); (2) the new
+  kernel-checked `Layer3_Defect_Regressions` theory pins that reachability
+  permanently. The 2.1 version DOI is reserved during the upload flow; the
+  concept DOI 10.5281/zenodo.20389696 always resolves to the latest
+  version. Predecessors, byte-frozen: v2.0 (version DOI
+  10.5281/zenodo.20652511; released 2026-06-12; ships the pre-repair
+  vacuous control) and v1.0 (version DOI 10.5281/zenodo.20389697; the
+  17-theory pre-AFP-grade surface).
 
 A representative clean-build transcript — `isabelle build -c -d .
 DBLog_Virtual_Cuts`, run from this directory; elapsed times are
