@@ -1,0 +1,153 @@
+% fig03.tex -- Set A (Architectural) Figure 3: DBLog mechanism.
+%
+% Top section: source-log axis with CDC events above and refresh events
+% below, anchored at source-log coordinates.
+% Bottom section: 7-row matrix laying out the merged raw replay with
+% column-aligned (pos, kind, coord, event, status).
+
+\centering
+\begin{tikzpicture}[setA, x=1cm, y=1cm]
+
+% ============================================================
+% Source-log coordinates.
+% ============================================================
+\def\xCa{2.20}
+\def\xCb{5.00}
+\def\xCc{7.50}
+\def\xCd{10.40}
+\def\xWAlo{1.30}
+\def\xWAhi{3.10}
+\def\xWBlo{6.80}
+\def\xWBhi{8.20}
+
+\def\yCDC{1.30}
+\def\yAxis{0}
+\def\yRef{-1.45}
+
+% ============================================================
+% Source-log axis.
+% ============================================================
+\draw[axisLine] (-0.10, \yAxis) -- (11.80, \yAxis);
+\foreach \x/\lab in {\xCa/c_1, \xCb/c_2, \xCc/c_3, \xCd/c_4} {
+  \draw[axisTick] (\x, \yAxis+0.07) -- (\x, \yAxis-0.07);
+  \node[font=\sffamily\scriptsize, fill=white, inner sep=1pt]
+    at (\x, \yAxis) {$\lab$};
+}
+\node[sublabelDim, anchor=west, inner sep=0pt, align=left]
+  at (11.95, \yAxis) {source-log};
+
+% ============================================================
+% CDC events ABOVE axis.
+% ============================================================
+\node[sublabel, anchor=east, font=\sffamily\scriptsize\itshape, text=gMid,
+      align=right, inner sep=0pt]
+  at (-0.10, \yCDC) {CDC events\\(source writes):};
+
+\foreach \x/\op/\key/\val in {%
+  \xCa/Upd/100/3000,
+  \xCb/Ins/300/2500,
+  \xCc/Upd/200/12000,
+  \xCd/Upd/300/3500%
+} {
+  \node[pillFill, anchor=south, font=\sffamily\scriptsize,
+        inner xsep=3pt, inner ysep=1.5pt] (cdc-\key) at (\x, \yCDC-0.10) {%
+    \strut\textbf{\op}~\key$\to$\val};
+  \draw[guide] (\x, \yAxis+0.10) -- (\x, \yCDC-0.10);
+}
+
+% ============================================================
+% Refresh events BELOW axis -- grouped by chunk with watermark
+% brackets.
+% ============================================================
+\node[sublabel, anchor=east, font=\sffamily\scriptsize\itshape, text=gMid,
+      align=right, inner sep=0pt]
+  at (-0.10, \yRef) {Refresh events\\(chunk rows):};
+
+% chunk A bracket (watermarked window)
+\draw[braceMirror] (\xWAlo, \yAxis-0.20) -- (\xWAhi, \yAxis-0.20);
+\node[sublabel, anchor=north, inner sep=2pt, fill=white]
+  at ($(\xWAlo,\yAxis-0.40)!0.5!(\xWAhi,\yAxis-0.40)$)
+  {chunk $A$};
+
+% chunk-A reads two rows at the same coord c_1 -- stack them
+% vertically so they don't compete for horizontal space.
+\node[pill, anchor=north, font=\sffamily\scriptsize,
+      inner xsep=3pt, inner ysep=1.5pt]
+  (rA1) at (\xCa, \yRef+0.40)
+  {\strut $A$:\,$100 \to 3000$};
+\node[pill, anchor=north, font=\sffamily\scriptsize,
+      inner xsep=3pt, inner ysep=1.5pt]
+  (rA2) at (\xCa, \yRef-0.10)
+  {\strut $A$:\,$200 \to 10000$};
+\draw[guide] (\xCa, \yAxis-0.20) -- (\xCa, \yRef+0.40);
+
+% chunk B bracket
+\draw[braceMirror] (\xWBlo, \yAxis-0.20) -- (\xWBhi, \yAxis-0.20);
+\node[sublabel, anchor=north, inner sep=2pt, fill=white]
+  at ($(\xWBlo,\yAxis-0.40)!0.5!(\xWBhi,\yAxis-0.40)$)
+  {chunk $B$};
+
+\node[pill, anchor=north, font=\sffamily\scriptsize,
+      inner xsep=3pt, inner ysep=1.5pt]
+  (rB1) at (\xCc, \yRef+0.20)
+  {\strut $B$:\,$300$$\to$$2500$};
+\draw[guide] (\xCc, \yAxis-0.20) -- (\xCc, \yRef+0.20);
+
+% ============================================================
+% Merger arrow with midway label -- single decorated descent.
+% ============================================================
+\draw[-{Latex[length=5pt, width=4pt]}, gDark, line width=0.7pt]
+  (5.85, \yRef-0.65) -- (5.85, \yRef-1.75)
+  node[midway, fill=white, inner sep=2pt,
+       font=\sffamily\scriptsize\itshape, text=gMid]
+       {merged in source-log order};
+
+% ============================================================
+% MERGED RAW REPLAY (matrix layout) -- 7 events with column-aligned
+% position, kind, coord, body.  Status column flags dominated rows.
+% ============================================================
+\matrix[
+  matrix of nodes,
+  column sep=10pt,
+  row sep=3pt,
+  nodes={font=\sffamily\scriptsize, anchor=west, inner xsep=2pt, inner ysep=1pt},
+  anchor=north,
+  ampersand replacement=\&,
+] (mr) at (5.85, \yRef-2.10) {%
+  |[font=\sffamily\bfseries\scriptsize]| \# \&
+    |[font=\sffamily\bfseries\scriptsize]| Kind \&
+    |[font=\sffamily\bfseries\scriptsize]| Coord \&
+    |[font=\sffamily\bfseries\scriptsize]| Event \&
+    |[font=\sffamily\bfseries\scriptsize]| In normalized view? \\
+  1 \& CDC \& $c_1$ \& Update~$100 \to 3000$        \& \checkmark \\
+  2 \& Ref \& $c_1$ \& chunk $A$: $100 \to 3000$    \& \checkmark \\
+  3 \& Ref \& $c_1$ \& chunk $A$: $200 \to 10000$   \& |[text=gMid, font=\sffamily\scriptsize\itshape]| dominated by 5 \\
+  4 \& CDC \& $c_2$ \& Insert~$300 \to 2500$        \& \checkmark \\
+  5 \& CDC \& $c_3$ \& Update~$200 \to 12000$       \& \checkmark \\
+  6 \& Ref \& $c_3$ \& chunk $B$: $300 \to 2500$    \& |[text=gMid, font=\sffamily\scriptsize\itshape]| dominated by 7 \\
+  7 \& CDC \& $c_4$ \& Update~$300 \to 3500$        \& \checkmark \\
+};
+
+% Frame around the merged-replay matrix
+\begin{scope}[on background layer]
+  \node[draw=gDark, line width=0.5pt, rounded corners=1pt,
+        inner sep=4pt, fit=(mr)] {};
+\end{scope}
+
+% Horizontal rule under the header row
+\draw[gMid, line width=0.35pt]
+  (mr.west |- mr-1-1.south) ++(0, -1.5pt)
+  -- (mr.east |- mr-1-1.south) ++(0, -1.5pt);
+
+\end{tikzpicture}
+
+\caption{The DBLog mechanism walked through the running example. Source
+writes become \emph{CDC events} (above the axis); chunk-read rows become
+\emph{refresh events} (below the axis, grouped by chunk and bracketed
+by source-log watermarks). The two streams merge in source-log order
+into the \emph{raw clean prefix} below --- the list the Layer~2 theorem
+is stated about. A refresh row whose key is touched by a later source write
+is flagged \emph{dominated}; the raw clean prefix keeps it, and an
+optional normalized view may drop it without changing the $\Apply$
+result (\S\ref{raw-replay-and-normalized-clean-prefix}).}
+\label{fig:dblog-mechanism}

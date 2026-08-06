@@ -1,0 +1,14 @@
+# LaTeX build products
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.toc
+paper/main.pdf
+
+# Isabelle build products
+formal/output/
+.isabelle/
+
+# Deposit extracted by the README's fidelity check
+DBLog_Virtual_Cuts-*/

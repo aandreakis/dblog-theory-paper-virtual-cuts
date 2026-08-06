@@ -1,0 +1,160 @@
+% fig04.tex -- Set A (Architectural) Figure 4: Virtual vs physical cut.
+%
+% Two symmetric panels separated by a vertical divider.  Each panel has
+% the same internal layout: title row, axis with marks, state
+% representation above the axis with a vertical guide from the axis up
+% to the state.  Left panel: physical cut (single read at f, no DBLog
+% run produces this).  Right panel: virtual cut (scattered chunk reads,
+% outcomes equal at f).
+
+\centering
+\begin{tikzpicture}[setA, x=1cm, y=1cm]
+
+% ============================================================
+% LEFT PANEL: Physical cut.
+% Panel anchored at xshift=0.  Local x from 0..6.5.
+% ============================================================
+\begin{scope}[xshift=0cm]
+
+% Panel title
+\node[font=\sffamily\footnotesize\bfseries, anchor=south]
+  at (3.25, 3.95) {Physical cut};
+\node[font=\sffamily\scriptsize\itshape, text=gMid, anchor=south]
+  at (3.25, 3.50) {what DBLog \emph{does not} produce};
+
+% Source-log axis
+\draw[axisLine] (0.10, 0) -- (6.40, 0);
+
+\def\xF{3.25}
+
+% State block above the cut.  Counterfactual: if DBLog produced a single
+% physical cut, this is what it would deliver -- same target state as
+% the right panel.  Concrete values reinforce "same outcome, different
+% mechanism".  Centered at y=2.30 so the block aligns with the right
+% panel's equality unit.
+\node[blockFill, anchor=center, align=center,
+      font=\sffamily\scriptsize, inner xsep=5pt, inner ysep=3pt]
+  (lstate) at (\xF, 2.30) {%
+  all keys read at $f$\\[1pt]
+  \begin{tabular}{@{\ }r@{\,:\,}l@{\ }}
+    100 & $3000$  \\
+    200 & $12000$ \\
+    300 & $3500$  \\
+  \end{tabular}};
+
+% Single thick cut line at f -- rises from the axis up to the
+% state block's south edge.  Weight 0.9pt for cross-figure consistency.
+\draw[gDark, line width=0.9pt] (\xF, 0) -- (lstate.south);
+\node[font=\sffamily\scriptsize\bfseries, anchor=north, inner sep=1pt]
+  at (\xF, -0.05) {$f$};
+
+% Subtitle below the axis -- y=-0.70 so it aligns with the right panel.
+\node[font=\sffamily\scriptsize\itshape, text=gDark, anchor=north,
+      align=center, text width=58mm]
+  at (\xF, -0.90)
+  {a single source-log coordinate at which\\
+   every key in scope is observed};
+
+% Visual annotation: the cut LINE is what makes this "physical"
+\node[font=\sffamily\scriptsize, anchor=west, text=gMid,
+      align=left, inner sep=1pt]
+  at (\xF+0.20, 0.55)
+  {monolithic\\\strut single-line cut};
+
+\end{scope}
+
+% ============================================================
+% VERTICAL DIVIDER between panels (stronger than gLight to read clearly)
+% ============================================================
+\draw[gMid, line width=0.5pt] (7.30, -1.30) -- (7.30, 4.10);
+
+% ============================================================
+% RIGHT PANEL: Virtual cut.
+% Panel anchored at xshift=7.95cm.  Local x from 0..6.5.
+% ============================================================
+\begin{scope}[xshift=7.95cm]
+
+% Panel title
+\node[font=\sffamily\footnotesize\bfseries, anchor=south]
+  at (3.25, 3.95) {Virtual cut};
+\node[font=\sffamily\scriptsize\itshape, text=gMid, anchor=south]
+  at (3.25, 3.50) {what DBLog \emph{does} produce};
+
+% Source-log axis with c1..c4
+\draw[axisLine] (0.10, 0) -- (6.40, 0);
+\def\xCa{0.95}
+\def\xCb{2.45}
+\def\xCc{3.95}
+\def\xCd{5.50}
+\foreach \x/\lab in {\xCa/c_1, \xCb/c_2, \xCc/c_3} {
+  \draw[axisTick] (\x, 0.06) -- (\x, -0.06);
+  \node[font=\sffamily\scriptsize, anchor=north, inner sep=1pt]
+    at (\x, -0.06) {$\lab$};
+}
+% Frontier tick c_4 = f, emphasized
+\draw[axisTick, line width=0.8pt] (\xCd, 0.10) -- (\xCd, -0.10);
+\node[font=\sffamily\scriptsize\bfseries, anchor=north, inner sep=1pt]
+  at (\xCd, -0.08) {$c_4 = f$};
+
+% Chunk-read brackets below axis
+\draw[braceMirror] (\xCa-0.30, -0.35) -- (\xCa+0.30, -0.35);
+\node[font=\sffamily\scriptsize, anchor=north, inner sep=1pt]
+  at (\xCa, -0.45) {chunk $A$};
+\draw[braceMirror] (\xCc-0.30, -0.35) -- (\xCc+0.30, -0.35);
+\node[font=\sffamily\scriptsize, anchor=north, inner sep=1pt]
+  at (\xCc, -0.45) {chunk $B$};
+
+% Frontier guide -- dotted, rises from c_4 to the equality unit's bottom
+\draw[guide] (\xCd, 0) -- (\xCd, 1.95);
+
+% State boxes -- Apply == Src on K, anchored above the frontier
+\def\eqY{2.30}
+\node[font=\sffamily\Large, anchor=center] (eq) at (3.25, \eqY) {$=$};
+\node[blockFill, anchor=east, align=center,
+      font=\sffamily\scriptsize, left=3pt of eq.west,
+      inner xsep=5pt, inner ysep=3pt]
+  (lbox) {%
+  \textbf{$\Apply(\CleanPrefix) \restrict K$}\\[1pt]
+  \begin{tabular}{@{\ }r@{\,:\,}l@{\ }}
+    100 & $3000$  \\
+    200 & $12000$ \\
+    300 & $3500$  \\
+  \end{tabular}};
+\node[block, anchor=west, align=center,
+      font=\sffamily\scriptsize, right=3pt of eq.east,
+      inner xsep=5pt, inner ysep=3pt]
+  (rbox) {%
+  \textbf{$\Src(b_0, H, f) \restrict K$}\\[1pt]
+  \begin{tabular}{@{\ }r@{\,:\,}l@{\ }}
+    100 & $3000$  \\
+    200 & $12000$ \\
+    300 & $3500$  \\
+  \end{tabular}};
+
+% Visual annotation: no single line gathers the keys
+\node[font=\sffamily\scriptsize, anchor=center, text=gMid,
+      align=center, inner sep=1pt]
+  at (3.25, 0.55)
+  {\emph{no single line};\\ outcomes match at $f$};
+
+% Subtitle below the axis
+\node[font=\sffamily\scriptsize\itshape, text=gDark, anchor=north,
+      align=center, text width=58mm]
+  at (3.25, -0.90)
+  {chunk reads at distinct coordinates;\\
+   replay-at-frontier $=$ source-at-frontier on scope $K$};
+
+\end{scope}
+
+\end{tikzpicture}
+
+\caption{Physical cut vs.\ virtual cut. \emph{Left:} a physical cut
+requires a single source-log coordinate at which every key in scope is
+observed --- a monolithic vertical line. DBLog does \emph{not} produce
+one; the values shown are the counterfactual ``if it did'' outcome on
+$K$. \emph{Right:} a virtual cut requires only that replay-at-frontier
+equal source-at-frontier on the chosen scope; the chunk reads (as in
+Figure~\ref{fig:running-example-timeline}) sit at distinct earlier
+coordinates, no single line gathers them, and the equality lives in
+outcome space rather than time space.}
+\label{fig:virtual-vs-physical-cut}

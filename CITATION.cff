@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: >-
+  If you refer to this work, please cite the paper. When the exact bytes of the
+  formal development matter, also cite the archived Zenodo version you used.
+title: >-
+  A Theoretical Study of DBLog: paper sources and Isabelle/HOL formal
+  development
+abstract: >-
+  Information hub for the paper "A Theoretical Study of DBLog: Certified Virtual
+  Cuts for a Snapshot-Equivalent Replay of Live Databases". Contains the paper
+  sources as posted to arXiv and the machine-checked Isabelle/HOL development
+  DBLog_Virtual_Cuts, byte-identical to its archived Zenodo deposit.
+type: software
+authors:
+  - family-names: Andreakis
+    given-names: Andreas
+    orcid: https://orcid.org/0009-0003-9025-9402
+version: "2.1"
+date-released: "2026-08-01"
+doi: 10.5281/zenodo.20389696
+repository-code: https://github.com/aandreakis/dblog-theory-paper-virtual-cuts
+url: https://arxiv.org/abs/2605.31475
+license:
+  - BSD-3-Clause
+  - CC-BY-4.0
+keywords:
+  - change data capture
+  - CDC
+  - database replication
+  - snapshot-equivalent replay
+  - virtual cut
+  - formal verification
+  - Isabelle/HOL
+  - interactive theorem proving
+  - DBLog
+preferred-citation:
+  type: article
+  title: >-
+    A Theoretical Study of DBLog: Certified Virtual Cuts for a
+    Snapshot-Equivalent Replay of Live Databases
+  authors:
+    - family-names: Andreakis
+      given-names: Andreas
+      orcid: https://orcid.org/0009-0003-9025-9402
+  year: 2026
+  doi: 10.48550/arXiv.2605.31475
+  url: https://arxiv.org/abs/2605.31475
+  notes: arXiv:2605.31475 [cs.DB]

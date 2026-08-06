@@ -1,269 +1,305 @@
-# DBLog_Virtual_Cuts — Isabelle/HOL formal development
+# A Theoretical Study of DBLog
 
-This is the machine-checked formal development that accompanies the paper
+### Certified Virtual Cuts for a Snapshot-Equivalent Replay of Live Databases
 
-> **A Theoretical Study of DBLog**  
-> *Certified Virtual Cuts for a Snapshot-Equivalent Replay of Live Databases*  
-> Andreas Andreakis
+[![Paper (arXiv)](https://img.shields.io/badge/paper-arXiv%3A2605.31475-b31b1b)](https://arxiv.org/abs/2605.31475)
+[![Artifact DOI](https://img.shields.io/badge/artifact-10.5281%2Fzenodo.20389696-1682D4)](https://doi.org/10.5281/zenodo.20389696)
 
-The paper studies DBLog as a *snapshot-equivalent replay protocol for live
-databases*: it produces a logical, replay-equivalent snapshot of a live
-database scope without taking a physical database snapshot. The central
-formal object is the **certified virtual cut** — a finite, asynchronously
-gathered mix of change-data-capture events and chunk reads whose certified
-replay reaches the same state as the source at a chosen frontier (a position
-in the source-event order, analogous to a CDC watermark or log sequence
-number) on a chosen key scope (the subset of keys the certificate claims to
-reconstruct, for example a single table's primary keys).
+This repository is the information hub for the paper **“A Theoretical Study of
+DBLog: Certified Virtual Cuts for a Snapshot-Equivalent Replay of Live
+Databases”** — a formal study of the DBLog change-data-capture backfill
+mechanism. It holds the **paper sources**, the **machine-checked Isabelle/HOL
+development**, and a plain-language account of what the work proves and what it
+deliberately does not.
 
-The paper's formal definitions and its named theorem ladder are formalized
-and machine-checked here, each under the conditional premises stated in its
-theorem (see the *Main results* section below). The Isabelle/HOL kernel
-checks the proofs under the assumptions stated in the paper; it does not,
-and cannot, discharge the *Deployment obligations* (conditions the operator
-or implementation must establish in a deployment — for example, faithful
-CDC delivery and watermark placement) or the *External observation
-assumption* (that the source-side observation is faithful, which the model
-cannot prove from the certificate alone). The role of the machine check
-is to guard against drift between the paper and the formalization.
+**Quick links** — [read the paper](https://arxiv.org/abs/2605.31475) ·
+[archived artifact](https://doi.org/10.5281/zenodo.20389696) ·
+[what is proved](#what-is-proved--and-what-is-not) ·
+[the nine theorems](#main-results) ·
+[run the proofs](#run-the-proofs) ·
+[**AGENTS.md** for AI tools](AGENTS.md)
 
-## Building
+---
 
-The development is built and checked with **Isabelle2025-2**
-(https://isabelle.in.tum.de/). It depends only on `HOL-Library` from the
-Isabelle distribution; no Archive of Formal Proofs entries are required.
-(The session's `chapter AFP` marker in `ROOT` reflects its packaging for
-a possible Archive submission; the build is fully standalone.)
+## The problem, in one paragraph
 
-From this directory:
+You have a live production database that keeps accepting writes, and a
+downstream system that needs a full copy of a table plus every change that
+follows. The textbook answer — take a snapshot, then start streaming from the
+snapshot's position — costs you a lock, a pause, or a long-running read
+transaction on the source. **DBLog** avoids all three: it reads the table in
+primary-key ranges (*chunks*), interleaves those reads with the source's own
+change log using *watermarks*, and lets later change events overwrite stale
+chunk rows. The mechanism was described in the [2019 Netflix Tech Blog
+post](https://netflixtechblog.com/dblog-a-generic-change-data-capture-framework-69351fb9099b)
+and the [2020 DBLog paper](https://arxiv.org/abs/2010.12597), and is now used in
+[Debezium](https://debezium.io/blog/2021/10/07/incremental-snapshots/) and
+[Apache Flink CDC](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.6/docs/connectors/flink-sources/mysql-cdc/#how-incremental-snapshot-reading-works).
 
-    isabelle build -d . DBLog_Virtual_Cuts
+The 2020 paper described the mechanism operationally. It never said what
+*correct* means for such a run, so there was nothing to prove. **This paper
+supplies that missing object and proves the result.**
 
-The session checks all thirty-eight theories `sorry`-free and generates
-the entry document (PDF), which requires a working LaTeX toolchain. The
-session's `ROOT` pins `document = pdf`, and session options take
-precedence over command-line `-o` options, so `-o document=false` does
-not disable it; to check the proofs without LaTeX, remove the
-`document = pdf, document_output = "output"` options from `ROOT`
-before building.
+<p align="center">
+  <img src="assets/fig03_dblog_mechanism.png" alt="Chunk reads and CDC events merged in source-log order; later CDC events dominate stale chunk rows." width="820">
+</p>
+<p align="center"><sub><b>How DBLog interleaves chunk reads with the change log.</b> Chunk rows enter the stream as <i>refresh events</i> at the coordinate where the chunk was read; a later change event for the same key dominates the earlier refresh. The merged stream is what a consumer replays.</sub></p>
 
-## Contents
+## The idea: a virtual cut
 
-The development is layered: each layer builds on the ones before it.
-Fourteen theories carry the definitions, locale infrastructure, and main
-theorems; the remaining twenty-four are constructed witnesses and
-fixtures, closing with a non-vacuity gate.
+A physical snapshot is a *single line* drawn across the source at one moment:
+every key read at the same position. DBLog never draws that line. Its chunk
+reads happen at scattered positions while writes continue around them.
 
-| Layer | Theory | Content |
-|-------|--------|---------|
-| 0 | `Source_History` | the source database: source coordinates (`src_coord`), source events, the append-only source history, frontiers, and the source state `Src` at a frontier |
-| 0 | `Replay` | replay events (CDC events and chunk-read refreshes) and the `Apply` replay function |
-| 0 | `Scope` | key-scope restriction of a per-key state |
-| 0 | `Source_Coordinates` | named concrete source coordinates via the embedding `coord_of_nat` of `nat` into `src_coord`, with order, distinctness, and injectivity lemmas proved by `nat` arithmetic (shared by the witnesses and fixtures) |
-| 0–1 | `DBLog_Run_Core` | carrier-independent core: chunk-read records, the canonical clean-prefix construction and its normalisation lemmas, and the per-key / per-coordinate source-history slicing helpers |
-| 1 | `DBLog_Run` | the concrete DBLog run — a single-constructor datatype with named selectors, chunk identifiers being plain naturals; the run and chunk-plan accessors as ordinary definitions; the distinct chunk enumeration `chunks_list` with its set and distinctness lemmas proved; the `wellformed_dblog_run` predicate |
-| 1 | `DBLog_Run_Substrate` | the `dblog_run_substrate` locale — the run/chunk accessor interface over abstract type variables — together with its canonical interpretation at the concrete run accessors |
-| 2 | `DBLog_Run_Substrate_Layer2` | the Layer 2 clean-prefix lemmas and the run-side soundness theorem, proved inside the run-substrate locale |
-| 2–4 | `Virtual_Cut_Core` | the carrier-independent virtual-cut-state core and the pure Layer 4 anchor-domain / table-scope definitions with their bridge lemmas |
-| 2–3 | `Virtual_Cut` | the virtual cut and the Layer 2 result; the concrete certificate (scope, frontier, clean prefix), the evidence carrier (which records the run backing the certificate), and the three-way verifier `verify` (`Accept` / `Reject` / `Unsupported`); the decomposition of run wellformedness into a checker-checkable half (`checker_run_wellformed`) and an external observation half (`run_reflects_source`), rejoined by the proved lemma `wellformed_dblog_run_decompose`; the `layer3_checker_substrate` locale and the Layer 3 certificate-soundness theorems |
-| 3–4 | `DBLog_Cert_Substrate` | the `dblog_cert_substrate` / `dblog_checker_substrate` locale hierarchy — the certificate side over abstract carriers — with locale-level versions of the Layer 3/4 theorems |
-| 3–4 | `DBLog_Cert_Substrate_Inst` | the canonical concrete interpretation of the certificate substrate, plus locale-level continuation corollaries |
-| 4 | `Layer4_Whole_Table` | the whole-table anchor-domain specialization |
-| post-core extension | `Continuation` | source-side continuation across frontiers and sub-scope restriction of virtual cuts |
+The paper's answer is to stop asking for the line and ask for its *outcome*
+instead. A **virtual cut** is a finite bundle of CDC events and chunk reads
+whose replay reaches **the same per-key state the source has at a chosen
+frontier, on a chosen key scope** — a *frontier* being a position in the
+source's event order (think LSN or watermark) and a *scope* being the set of
+keys the claim covers (for example, one table's primary keys).
 
-One modelling note: the run- and certificate-layer theorems (the core
-ladder and the accepted-certificate continuation result) carry a
-`linorder` (linear-order) hypothesis on the key type `'k`. It enters in
-the canonical clean-prefix construction (`DBLog_Run_Core`), which
-enumerates each chunk-read domain with `sorted_list_of_set` and
-interleaves the emitted events by source coordinate with a stable
-`sort_key` — making "for each key in the chunk domain" a deterministic
-enumeration, as the paper implicitly assumes; `clean_prefix_of`
-propagates the constraint upward. The four state-level continuation /
-restriction results (`virtual_cut_state_continuation`,
-`virtual_cut_state_restrict_scope`, `whole_table_state_continuation`,
-`virtual_cut_restrict_to_subscope`) are constraint-free. Database
-primary keys are totally ordered in practice, so the hypothesis does not
-narrow the intended interpretation.
+<p align="center">
+  <img src="assets/fig04_virtual_vs_physical_cut.png" alt="Left: a physical cut reads all keys at one coordinate. Right: a virtual cut reads chunks at scattered coordinates yet its replay equals the source state at the frontier." width="820">
+</p>
+<p align="center"><sub><b>Physical cut vs virtual cut.</b> No single source coordinate is claimed. The claim is an equality of <i>outcomes</i> at the frontier, on the scope.</sub></p>
 
-The remaining twenty-four theories are not required to state or prove
-the main theorems; they exercise the definitions and guard against
-vacuity. They come in families of up to three theories: `*_Core` holds
-carrier-independent data (named coordinates, base states, source
-histories, expected-value lemmas); `*_Model` exhibits a small concrete
-model — datatype or numeric carriers with definitional accessors realizing
-exactly the values the witness needs; `*_Inst` interprets the substrate
-locales at that model and proves the witness or fixture facts there. Some
-families share a model or interpret directly, so not every family has all
-three pieces.
+A **certified** virtual cut adds evidence: a certificate carrying the scope,
+the frontier, and the replayable prefix, which a verifier checks and answers
+`Accept`, `Reject`, or `Unsupported`. The paper's central results say what an
+`Accept` buys you — and, just as carefully, what it does not.
 
-- `Layer01_Witnesses_{Core,Model,Inst}` — the minimum-viable wellformed-run positive witness.
-- `Layer01_Witness_Topics_{Core,Model,Inst}` — two further positive run witnesses over different base-state and source-history shapes.
-- `Layer01_Virtual_Cut_Example_{Core,Model,Inst}` — the paper's running example (the accounts-table backfill) as a fully worked virtual cut.
-- `Layer01_Fixtures_{Core,Model,Inst}` — Layer 0/1 negative and boundary fixtures: runs violating individual wellformedness clauses are rejected.
-- `Layer2_Fixtures_{Core,Inst}` — canonical clean-prefix structural and frontier boundary fixtures; the `Inst` reuses the Layer 0/1 models.
-- `Layer4_Witnesses_Core` and `Layer3_Witnesses_Inst` — the Layer 3 accepted-certificate and Layer 4 whole-table positive witnesses: anchor data in the `Core`, one shared interpretation proving both.
-- `Layer3_Fixtures_{Core,Inst}` — checker fixtures, including wrong-base-state and wrong-history scenarios with unfaithful source observation.
-- `Layer3_Defect_Regressions` — permanent kernel-checked regression pinning that the Layer 3 same-evidence negative control materializes its run and so genuinely reaches the accessor comparison it advertises (the version 2.1 fixture repair).
-- `Layer4_Fixtures_{Core,Inst}` — boundary and counterexample fixtures for the whole-table specialization.
-- `Continuation_Fixtures_{Core,Inst}` — the positive continuation witness and the load-bearing and boundary fixtures of the extension.
-- `Public_Checker_Witness` — the closing non-vacuity gate (below).
+## What is proved — and what is not
 
-### Constructed witnesses and fixtures
+DBLog's central promise is machine-checked. Chunked reads interleaved with the
+change log — no lock, no pause, no snapshot read — yield a bundle whose replay
+reaches **exactly the state a snapshot at the chosen frontier would have
+shown**, on the chosen key scope, for every run that meets the model's
+wellformedness obligations. Proved in Isabelle/HOL down to the definitions,
+with no axioms, and exhibited on constructed witnesses that show it is not
+vacuous.
 
-Every witness and fixture fact is established constructively: a concrete
-model is exhibited as closed-form data, the substrate locales are
-interpreted at it (or the facts are proved directly over the public
-carriers), and the non-vacuity, acceptance, and rejection claims are
-proved at that instance by computation. Nothing in the session is
-axiomatized — there is no `axiomatization`, `typedecl`, or `consts`
-declaration. The only `typedef` is the source coordinate type,
-`typedef src_coord = "UNIV :: nat set"` in `Source_History` — a
-conservative extension over a provably nonempty set, with its `linorder`
-and `order_bot` instances proved, not assumed. The Isabelle kernel
-therefore checks every fact in the development down to definitions; no
-claim rests on a postulated model shape.
+**Proved** — each result under the premises its own statement names:
 
-The final theory, `Public_Checker_Witness`, is the non-vacuity gate: it
-exhibits a concrete certificate / evidence pair over the public carriers
-that `verify` genuinely accepts, a deployment environment under which
-`faithful_source_observation` genuinely holds, and fires all nine main
-theorems at such concrete witnesses. Two closing exhibits — an accepted
-pair whose observation is unfaithful, and faithful evidence the verifier
-rejects — show the two headline premises are independent and not vacuous.
+- The clean prefix of a wellformed DBLog run *is* a virtual cut: replaying it
+  reproduces the source state at the run's frontier, on the run's scope.
+- A certificate the verifier accepts, paired with a faithful observation of the
+  source, is witnessed by a wellformed run — and therefore yields a virtual cut.
+- When the certified scope is the whole table, the equality holds unrestricted
+  at the frontier.
+- Source-side algebra: a cut **advances** to a later frontier by appending the
+  scope-filtered CDC segment committed in between, and **restricts** to any
+  sub-scope.
+
+**Not proved — deliberately**
+
+- **Exactly-once delivery.** Nothing here is a delivery claim.
+- **Sink-state convergence.** The destination side needs a separate sink model;
+  the paper marks it as future work and a non-claim.
+- **That any deployment satisfies the premises.** Faithful CDC delivery, log
+  retention, watermark placement and chunk-read honesty are *deployment
+  obligations*: hypotheses in the theorems, conditions in real life.
+- **That the source observation is faithful.** This is the *external observation
+  assumption*. A certificate alone cannot establish it, and the verifier's
+  `Accept` does not imply it.
+- **Whole-table correctness from a scoped cut.** Scope widening is never
+  claimed; only restriction is.
+- **That Debezium, Flink CDC, or Netflix's DBLog are correct.** Those systems
+  implement the mechanism this paper models; verifying an implementation
+  against the model is not part of this work.
+
+The kernel checks proofs, not deployments: it cannot verify that a running
+system meets a theorem's premises. Naming those premises precisely — and
+proving they are satisfiable rather than assuming it — is itself part of the
+result, and it is what lets an implementer see exactly which obligations their
+pipeline has to carry.
 
 ## Main results
 
+<p align="center">
+  <img src="assets/fig01_theorem_ladder.png" alt="The theorem ladder from Layer 0/1 through Layer 4, plus the post-core extension map." width="760">
+</p>
+
+Nine headline theorems, all in [`formal/`](formal/), all `sorry`-free.
+
 ### Core ladder (Layers 2–4)
 
-Four core theorems carry the development.
+| Theorem | In plain words | Where |
+|---|---|---|
+| `wellformed_run_implies_virtual_cut` | A wellformed run's clean prefix replays to the source state at its frontier, on its scope. | [`Virtual_Cut.thy`](formal/Virtual_Cut.thy) |
+| `accepted_certificate_implies_wellformed_run` | An accepted certificate + faithful source observation is witnessed by a wellformed, coherent run. | [`Virtual_Cut.thy`](formal/Virtual_Cut.thy) |
+| `accepted_virtual_cut_sound` | Therefore an accepted certificate, under faithful observation, *is* a virtual cut. | [`Virtual_Cut.thy`](formal/Virtual_Cut.thy) |
+| `accepted_whole_table_anchor_domain_specialization` | If the claim scope is the whole table, the equality holds on every key. | [`Layer4_Whole_Table.thy`](formal/Layer4_Whole_Table.thy) |
 
-- **`wellformed_run_implies_virtual_cut`** — the clean prefix of a wellformed
-  DBLog run is a virtual cut: replaying it reproduces the source state,
-  restricted to the run's scope, at the run's frontier.
+The Layer 3 and Layer 4 results are proved inside the `layer3_checker_substrate`
+locale, which abstracts the verifier as a set of soundness obligations. Those
+obligations are discharged for the concrete verifier in `Virtual_Cut.thy`, and
+[`Public_Checker_Witness.thy`](formal/Public_Checker_Witness.thy) fires all nine
+theorems at concrete witnesses — so the hypotheses are satisfiable, not vacuous.
 
-- **`accepted_certificate_implies_wellformed_run`** — a certificate accepted
-  by the verifier, paired with a faithful observation of the source, is
-  witnessed by a wellformed run that is coherent with the certificate.
+### Source-side continuation and restriction
 
-- **`accepted_virtual_cut_sound`** — a certificate accepted by the verifier,
-  under faithful source observation, is a virtual cut: its certified replay
-  reaches the source state at the certified frontier on the certified scope.
+| Theorem | In plain words | Where |
+|---|---|---|
+| `virtual_cut_state_continuation` | On a wellformed source history, a cut at frontier `f` extends to any later `f'` by appending the faithful CDC segment for `(f, f']` on the same scope. | [`Continuation.thy`](formal/Continuation.thy) |
+| `virtual_cut_state_restrict_scope` | A cut on scope `K` restricts to any `K' ⊆ K`. (Widening is not claimed.) | [`Continuation.thy`](formal/Continuation.thy) |
+| `whole_table_state_continuation` | The whole-table instance of continuation. A scoped cut does not become whole-table for free. | [`Continuation.thy`](formal/Continuation.thy) |
+| `virtual_cut_restrict_to_subscope` | An accepted certificate's cut restricts to a sub-scope as a source-side equality — *not* as a claim that the restricted certificate is accepted. | [`Continuation.thy`](formal/Continuation.thy) |
+| `accepted_certificate_continuation_sound` | Accessor-level continuation for an accepted certificate, inside the checker-substrate locale. | [`Continuation.thy`](formal/Continuation.thy) |
 
-- **`accepted_whole_table_anchor_domain_specialization`** — when the
-  certificate's claim scope is the whole table, applying its clean prefix
-  reproduces the entire source state at the frontier.
+A modelling note: the run- and certificate-layer results carry a `linorder`
+hypothesis on the key type, because the canonical clean-prefix construction
+enumerates chunk domains deterministically. Database primary keys are totally
+ordered in practice. The four state-level continuation/restriction results are
+constraint-free.
 
-Each core result is conditional. The Layer 2 result,
-`wellformed_run_implies_virtual_cut`, is conditional on the hypotheses named
-in its statement — chiefly the `wellformed_dblog_run` premise. The Layer 3
-and Layer 4 results are established *inside* the `layer3_checker_substrate`
-locale, which abstracts the verifier as a set of soundness obligations: an
-accepted certificate has a wellformed materializing run whose accessors
-agree with the certificate, under faithful source observation. Their
-conditions are the hypotheses named in each statement — verifier
-acceptance, faithful source observation, and, for the whole-table result, a
-whole-table claim scope — *together with* these checker-substrate
-obligations. The obligations are proved for the concrete verifier in
-`Virtual_Cut`, and `Public_Checker_Witness` exercises them at an accepted
-pair, so the locale hypotheses are satisfiable. All of these correspond to
-the Deployment obligations and the External observation assumption
-discussed in the paper: the formalization makes them explicit hypotheses;
-it does not discharge them.
+Full statements, premises and per-theorem “what this does *not* say” notes:
+**[`docs/THEOREMS.md`](docs/THEOREMS.md)**.
 
-### Continuation extension
+## Repository map
 
-The continuation extension is the promoted source-side fragment of the
-"certificate algebra" future-work catalog (see the paper's "Source-Side
-Continuation and Restriction of Virtual Cuts" section). It is built source-side
-over the core ladder: each result is an `Apply`-against-`Src` equality, and
-the proofs compose with Layer 2 and Layer 3 without re-opening the DBLog
-run model.
+| Path | What it is |
+|---|---|
+| [`paper/`](paper/) | LaTeX sources of the paper, exactly as submitted to arXiv (v2), plus the built PDF. |
+| [`formal/`](formal/) | The Isabelle/HOL development — **byte-identical to the archived Zenodo artifact**. Do not edit; see [below](#verify-this-repository-against-the-archived-artifact). |
+| [`formal/README.md`](formal/README.md) | The artifact's own README: theory-by-theory contents, witnesses and fixtures, release metadata. |
+| [`docs/`](docs/) | [Theorem index](docs/THEOREMS.md) with verbatim statements and premises; [provenance](docs/PROVENANCE.md) of paper and artifact versions. |
+| [`assets/`](assets/) | Figures rendered at 300 dpi from the paper's TikZ sources, for this page. |
+| [`AGENTS.md`](AGENTS.md) | Orientation file for AI assistants and automated readers. |
 
-- **`virtual_cut_state_continuation`** — primary continuation theorem. On a
-  wellformed source history, a virtual cut at frontier `f` on scope `K`
-  extends to a virtual cut at any later frontier `f'` on `K` by appending the
-  faithful CDC continuation segment for the half-open interval `(f, f']` on
-  `K`. The premise that the appended segment is exactly the
-  `cdc_segment_between` for `(f, f']` on `K` is the source-side faithfulness
-  obligation; the wellformedness of the source history is the second
-  conditional premise.
+## Read the paper
 
-- **`virtual_cut_state_restrict_scope`** — sub-scope restriction lemma. A
-  virtual cut on key scope `K` restricts to a virtual cut on any `K' ⊆ K`.
-  The converse — scope widening — is not stated and would assert agreement on
-  keys never certified.
+- **arXiv:** [abs](https://arxiv.org/abs/2605.31475) · [PDF](https://arxiv.org/pdf/2605.31475) — 31 pages, 5 figures, cs.DB + cs.LO, CC BY 4.0.
+- **In this repository:** [`paper/dblog_virtual_cuts_v2.pdf`](paper/dblog_virtual_cuts_v2.pdf)
+  — arXiv's own build of v2, carrying its margin stamp.
+- **Build it yourself:**
 
-- **`whole_table_state_continuation`** — whole-table instance of continuation.
-  On a wellformed source history, when `Apply σ = Src b0 H f` holds
-  unrestricted — the all-keys equality the Layer 4 specialisation yields —
-  appending the full CDC segment for `(f, f']` on `UNIV` reaches the source
-  state at `f'` on every key. A scoped continuation does not become
-  whole-table for free.
+  ```bash
+  cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
+  ```
 
-- **`virtual_cut_restrict_to_subscope`** — certificate-accessor sub-scope
-  restriction. An accepted certificate's virtual cut, read through its
-  accessors, restricts to any sub-scope `K' ⊆ scope C` as a source-side
-  `virtual_cut_state` equality on `clean_prefix C` at `frontier C`. This is
-  *not* a claim that a restricted certificate is accepted by the verifier;
-  verifier acceptance of any concrete restricted certificate is an evidence
-  obligation, not a consequence of the source-side algebra.
+  The five figures are TikZ sources under `paper/figures/`; no external image
+  files are needed.
 
-- **`accepted_certificate_continuation_sound`** — accessor-level accepted-
-  certificate continuation. Inside the `layer3_checker_substrate` locale, an
-  accepted certificate under faithful source observation extends, by a
-  faithful CDC continuation segment for `(frontier C, f']` on `scope C`, to
-  a virtual-cut-state equality on `clean_prefix C @ δ` at the later frontier
-  `f'`. The conditional premises are verifier acceptance, faithful source
-  observation, wellformedness of the source history, the locale's
-  checker-substrate obligations, *and* the continuation-segment faithfulness
-  premise on `δ`.
+## Run the proofs
 
-Each continuation-extension result is conditional on the hypotheses named
-in its statement, with the same Deployment-obligation and
-External-observation-assumption interpretation as the core ladder. The
-extension is source-side throughout: no result here is a destination-state,
-delivery, sink, or extended-certificate-acceptance claim.
+Requires [Isabelle2025-2](https://isabelle.in.tum.de/). The session depends only
+on `HOL-Library` from the distribution — no Archive of Formal Proofs entry.
 
-## Release metadata
+```bash
+isabelle build -d formal DBLog_Virtual_Cuts
+```
 
-For the artifact as deposited on Zenodo, the verification environment is
-pinned as follows.
+All 38 theories check `sorry`-free and the session builds its own PDF document,
+which requires a LaTeX toolchain. To check proofs without LaTeX, remove the
+`document = pdf, document_output = "output"` options from `formal/ROOT` first —
+session options take precedence over `-o document=false` on the command line.
 
-- **Session.** `DBLog_Virtual_Cuts`, 38 theories (see *Contents* above), checked `sorry`-free.
-- **Prover.** Isabelle2025-2 (`ISABELLE_IDENTIFIER=Isabelle2025-2`),
-  using `HOL-Library` only — no Archive of Formal Proofs entry.
-- **Release identification.** Version 2.1. Changes vs 2.0, one line each:
-  (1) the same-evidence negative control in `Layer3_Fixtures_Inst` now
-  materializes its run, so the accessor-agreement comparison it advertises
-  is genuinely exercised (in the 2.0 release the control was discharged by
-  failed materialization alone; found by an external review); (2) the new
-  kernel-checked `Layer3_Defect_Regressions` theory pins that reachability
-  permanently. The 2.1 version DOI is reserved during the upload flow; the
-  concept DOI 10.5281/zenodo.20389696 always resolves to the latest
-  version. Predecessors, byte-frozen: v2.0 (version DOI
-  10.5281/zenodo.20652511; released 2026-06-12; ships the pre-repair
-  vacuous control) and v1.0 (version DOI 10.5281/zenodo.20389697; the
-  17-theory pre-AFP-grade surface).
+Nothing in the session is axiomatized: there is no `axiomatization`, `typedecl`
+or `consts` declaration, and the single `typedef` (the source coordinate type)
+is a conservative extension over a provably non-empty set.
 
-A representative clean-build transcript — `isabelle build -c -d .
-DBLog_Virtual_Cuts`, run from this directory; elapsed times are
-machine-dependent:
+## Verify this repository against the archived artifact
 
-    Cleaned DBLog_Virtual_Cuts
-    Running DBLog_Virtual_Cuts ...
-    Preparing DBLog_Virtual_Cuts/document ...
-    Finished DBLog_Virtual_Cuts/document (0:00:10 elapsed time)
-    Document at ".../output/document.pdf"
-    Finished DBLog_Virtual_Cuts (0:00:11 elapsed time, 0:00:46 cpu time, factor 4.16)
-    0:00:25 elapsed time, 0:00:46 cpu time, factor 1.80
+The contents of `formal/` are the deposited bytes. You can check that in one
+command:
 
-The build exits with status 0, and no theory uses `sorry` or `oops`.
+```bash
+curl -sL https://zenodo.org/records/21732790/files/DBLog_Virtual_Cuts-2.1.tar.gz | tar xz
+diff -r DBLog_Virtual_Cuts-2.1 formal   # no output means identical
+```
 
-## License
+The Zenodo deposit remains the archival identifier; this repository is a
+convenience mirror plus the surrounding context.
 
-Released under the BSD 3-Clause License. See [`LICENSE`](LICENSE).
+## Versions, DOIs, and provenance
+
+| | Paper | Formal development |
+|---|---|---|
+| Current | [arXiv:2605.31475v2](https://arxiv.org/abs/2605.31475) (12 Jun 2026) | `2.1` — [10.5281/zenodo.21732790](https://doi.org/10.5281/zenodo.21732790), repo tag [`v2.1`](../../tree/v2.1) |
+| Previous | v1 (29 May 2026) | `2.0` — [10.5281/zenodo.20652511](https://doi.org/10.5281/zenodo.20652511), tag [`v2.0`](../../tree/v2.0) · `1.0` — [10.5281/zenodo.20389697](https://doi.org/10.5281/zenodo.20389697), tag [`v1.0`](../../tree/v1.0) |
+| Always-latest DOI | — | [10.5281/zenodo.20389696](https://doi.org/10.5281/zenodo.20389696) (concept DOI) |
+
+**The paper does not point at version 2.1.** The current paper, arXiv v2 of
+12 June 2026, prints one artifact DOI — `10.5281/zenodo.20652511`, **version
+2.0** — twice in the body and once in the bibliography. Version 2.1 was
+published on 1 August 2026, after that posting, so no version of the paper
+references it.
+
+Following the paper's DOI therefore lands on 2.0, while this repository ships
+2.1. The difference is one repair and nothing else: a Layer 3 negative control
+that failed to materialize its run, so the comparison it advertised was never
+exercised (found by an external review), plus a kernel-checked regression theory
+pinning that reachability. **The nine headline theorem statements are
+unchanged** — the repaired control's own statement is strictly strengthened —
+and the paper's claims are unaffected, which is why the paper was not revised
+for it.
+
+The **concept DOI** `10.5281/zenodo.20389696` always resolves to the newest
+version; the **version DOIs** name exact bytes. Cite the version DOI when the
+bytes matter.
+
+Full history: [`docs/PROVENANCE.md`](docs/PROVENANCE.md).
+
+## For AI agents and tools
+
+If you are an AI assistant summarizing, citing, or answering questions about
+this work, read **[`AGENTS.md`](AGENTS.md)** first. It carries the source
+precedence order, the exact theorem index, the vocabulary, and the list of
+claims this work does *not* make — the misreadings are predictable, and that
+file is written to prevent them.
+
+## Citing
+
+The paper:
+
+```bibtex
+@misc{andreakis2026dblog_virtual_cuts_paper,
+  author = {Andreas Andreakis},
+  title  = {A Theoretical Study of {DBLog}: Certified Virtual Cuts for a
+            Snapshot-Equivalent Replay of Live Databases},
+  year   = {2026},
+  eprint = {2605.31475},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.DB},
+  doi    = {10.48550/arXiv.2605.31475}
+}
+```
+
+The formal development (cite the version you used):
+
+```bibtex
+@misc{andreakis2026dblog_virtual_cuts,
+  author    = {Andreas Andreakis},
+  title     = {{DBLog\_Virtual\_Cuts}: {Isabelle/HOL} formal development for
+               ``{A Theoretical Study of DBLog}''},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {2.1},
+  doi       = {10.5281/zenodo.21732790},
+  note      = {Software, BSD 3-Clause License.}
+}
+```
+
+GitHub's *Cite this repository* button reads [`CITATION.cff`](CITATION.cff).
+
+## Background and related work
+
+- **DBLog: A Watermark Based Change-Data-Capture Framework** — Andreakis &
+  Papapanagiotou, 2020. [arXiv:2010.12597](https://arxiv.org/abs/2010.12597).
+  The original mechanism paper; this work is its theoretical follow-up.
+- **DBLog: A Generic Change-Data-Capture Framework** — Netflix Tech Blog, 2019.
+  [Post](https://netflixtechblog.com/dblog-a-generic-change-data-capture-framework-69351fb9099b).
+
+## Licence
+
+- **Paper text and figures** (`paper/`, `assets/`, `docs/`) — Creative Commons
+  Attribution 4.0 International (CC BY 4.0), matching the arXiv posting.
+  See [`LICENSES/CC-BY-4.0.txt`](LICENSES/CC-BY-4.0.txt).
+- **Isabelle/HOL development** (`formal/`) — BSD 3-Clause. See
+  [`LICENSE`](LICENSE), a copy of `formal/LICENSE` as it ships inside the
+  archived deposit.
 
 ## Author
 
-Andreas Andreakis.
+**Andreas Andreakis** — independent researcher.
+[ORCID 0009-0003-9025-9402](https://orcid.org/0009-0003-9025-9402)

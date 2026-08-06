@@ -1,0 +1,184 @@
+% fig01.tex -- Set A (Architectural) Figure 1: theorem ladder + post-core extension map.
+
+\centering
+\begin{tikzpicture}[setA]
+
+% ============================================================
+% Styles.
+%   Panel A (the core ladder): chip + slab + premise note.
+%   Panel B (the post-core extension map): titled cards with
+%   per-item status chips.
+% ============================================================
+\tikzset{
+  ladderChip/.style={layerChip, minimum width=11mm, minimum height=11mm},
+  ladderSlab/.style={block, text width=82mm, minimum height=11mm,
+                     align=left, inner sep=4pt, font=\sffamily\footnotesize},
+  ladderNote/.style={font=\sffamily\scriptsize\itshape, text=gMid,
+                     text width=44mm, align=left, anchor=west,
+                     inner sep=0pt},
+  panelHd/.style={font=\sffamily\bfseries\footnotesize, text=gDark,
+                  anchor=west},
+  cardTtl/.style={font=\sffamily\bfseries\footnotesize, text=gDark,
+                  anchor=north west, text width=62mm, align=left,
+                  inner sep=0pt},
+  cardAtt/.style={font=\sffamily\scriptsize\itshape, text=gMid,
+                  anchor=north west, text width=62mm, align=left,
+                  inner sep=0pt},
+  cardTxt/.style={font=\sffamily\scriptsize, text=gDark,
+                  anchor=north west, text width=62mm, align=left,
+                  inner sep=0pt},
+  cardTxtG/.style={font=\sffamily\scriptsize, text=gMid,
+                   anchor=north west, text width=62mm, align=left,
+                   inner sep=0pt},
+  chipNow/.style={draw=gDark, line width=0.5pt, rounded corners=2pt,
+                  fill=gPale, font=\sffamily\bfseries\scriptsize,
+                  text=gDark, inner xsep=4pt, inner ysep=1.6pt,
+                  anchor=north west},
+  chipFut/.style={draw=gLight, line width=0.5pt, rounded corners=2pt,
+                  fill=white, font=\sffamily\bfseries\scriptsize,
+                  text=gMid, inner xsep=4pt, inner ysep=1.6pt,
+                  anchor=north west},
+  cardBox/.style={draw=gMid, line width=0.6pt, rounded corners=2.5pt,
+                  fill=gBg},
+}
+
+\def\rowGap{2.5mm}
+
+% ============================================================
+% PANEL A -- the source-side core: the theorem ladder.
+% Layers 0--4, each rung Conditional and depending on the rung
+% above it.
+% ============================================================
+\node[panelHd] (hdA) at (-5.5mm,10mm)
+  {The theorem ladder \textemdash\ source-side core (Layers 0--4)};
+
+% --- LAYER 0/1 (two formal layers folded into one row) ---
+\node[ladderChip] (c01) at (0,0) {0\,/\,1};
+\node[ladderSlab,  right=1.5mm of c01, anchor=west] (s01) {%
+  \textbf{Source histories, replay events, abstract DBLog runs.}
+  Defines $\WellformedRun$ (source-log retention, frontier discipline,
+  watermark consistency, chunk-read honesty).};
+\node[ladderNote,  right=2mm   of s01]              (n01)                      {%
+  Conditional on the wellformed-run model.\\
+  WF carries the source-side observation\\
+  obligations; the certificate's external-\\
+  observation premise enters at Layer 3.};
+
+% --- LAYER 2 ---
+\node[ladderChip,  below=\rowGap of c01.south, anchor=north] (c2)              {2};
+\node[ladderSlab,  right=1.5mm of c2,  anchor=west]          (s2)              {%
+  \textbf{Source-side virtual-cut soundness.}
+  $\WellformedRun \Rightarrow$ replay at frontier equals source on the
+  run scope.};
+\node[ladderNote,  right=2mm   of s2]                        (n2)              {%
+  Same premises as L0/1; no \emph{new}\\
+  assumptions (external observation\\
+  is already inherited).};
+
+% --- LAYER 3 ---
+\node[ladderChip,  below=\rowGap of c2.south, anchor=north]  (c3)              {3};
+\node[ladderSlab,  right=1.5mm of c3, anchor=west]           (s3)              {%
+  \textbf{Accepted-certificate soundness.}
+  $\Verify(C{,}E)=\Accept \,\land\, \FaithfulSourceObservation \,\land\,$
+  checker substrate $\Rightarrow \VirtualCut(C, H)$.};
+\node[ladderNote,  right=2mm   of s3]                        (n3)              {%
+  Conditional on Layer 2 $+$\\
+  checker-substrate obligations $+$\\
+  External observation assumption.};
+
+% --- LAYER 4 ---
+\node[ladderChip,  below=\rowGap of c3.south, anchor=north]  (c4)              {4};
+\node[ladderSlab,  right=1.5mm of c4, anchor=west]           (s4)              {%
+  \textbf{Whole-table specialization.}
+  $\VirtualCut(C, H) \,\land\, \WholeTableClaimScope(C, H, b) \Rightarrow$
+  unrestricted equality on the table at the frontier.};
+\node[ladderNote,  right=2mm   of s4]                        (n4)              {%
+  Conditional on Layer 3 $+$\\
+  $\WholeTableClaimScope(C, H, b)$.};
+
+% Dependency spine: lower depends on upper.
+\foreach \a/\b in {c01/c2, c2/c3, c3/c4} {
+  \draw[-{Latex[length=5pt, width=4pt]}, gDark, line width=0.9pt]
+    ([yshift=-0.2pt]\a.south)
+    -- ([yshift=0.2pt]\b.north);
+}
+
+% ============================================================
+% Panel divider -- a neutral layout rule. NOT a status boundary:
+% the post-core area below is mixed-status, so no "future work"
+% line is drawn.
+% ============================================================
+\coordinate (divL) at ($(c4.south west) + (-6.5mm, -7mm)$);
+\coordinate (divR) at ($(n4.east |- divL) + (0.5mm, 0)$);
+\draw[gLight, line width=0.4pt] (divL) -- (divR);
+
+% ============================================================
+% PANEL B -- the post-core extension map.
+% Two independent extension paths off the core; NOT ladder
+% rungs. Each card carries per-item status chips.
+% ============================================================
+\node[panelHd, anchor=north west] (hdB) at ($(divL) + (0,-4mm)$)
+  {Post-core extension map \textemdash\ independent extensions, \emph{not} ladder rungs};
+
+% --- Card 1: source-side virtual-cut algebra (extends Layer 2) ---
+\node[cardTtl, anchor=north west] (a-ttl) at ($(hdB.south west) + (1.5mm,-3.5mm)$)
+  {Source-side virtual-cut algebra};
+\node[cardAtt, anchor=north west] (a-att) at ([yshift=-0.8mm]a-ttl.south west)
+  {Extends the Layer~2 virtual-cut theorem.};
+\node[chipNow, anchor=north west] (a-c1) at ([yshift=-1.5mm]a-att.south west)
+  {Conditional};
+\node[cardTxt, anchor=north west] (a-d1) at ([yshift=-0.8mm]a-c1.south west)
+  {Continuation across frontiers; restriction to a sub-scope.};
+\node[chipFut, anchor=north west] (a-c2) at ([yshift=-1.6mm]a-d1.south west)
+  {Future work};
+\node[cardTxtG, anchor=north west] (a-d2) at ([yshift=-0.8mm]a-c2.south west)
+  {Disjoint composition; concrete extended-certificate verification;
+   raw overlap/retry normalization.};
+
+% --- Card 2: destination-side sink extensions (extend the certified prefix) ---
+\node[cardTtl, anchor=north west] (b-ttl) at ($(a-ttl.north west) + (72mm,0)$)
+  {Destination-side sink extensions};
+\node[cardAtt, anchor=north west] (b-att) at ([yshift=-0.8mm]b-ttl.south west)
+  {Extend the core's certified clean prefix; need a separate sink model.};
+\node[chipFut, anchor=north west] (b-c1) at ([yshift=-1.5mm]b-att.south west)
+  {Future work, Non-claim};
+\node[cardTxtG, anchor=north west] (b-d1) at ([yshift=-0.8mm]b-c1.south west)
+  {ACK-only receipt; stream-prefix correctness. Applied destination
+   state is a Non-claim.};
+\node[chipFut, anchor=north west] (b-c2) at ([yshift=-1.6mm]b-d1.south west)
+  {Future work};
+\node[cardTxtG, anchor=north west] (b-d2) at ([yshift=-0.8mm]b-c2.south west)
+  {Strong sink-state barrier convergence; needs a fenced, idempotent
+   sink contract and visible apply-barrier evidence.};
+
+% Card background boxes (drawn behind the content).
+\begin{scope}[on background layer]
+  \node[cardBox, fit=(a-ttl)(a-att)(a-c1)(a-d1)(a-c2)(a-d2),
+        inner sep=4pt] {};
+  \node[cardBox, fit=(b-ttl)(b-att)(b-c1)(b-d1)(b-c2)(b-d2),
+        inner sep=4pt] {};
+\end{scope}
+
+\end{tikzpicture}
+
+\caption{Theorem ladder and post-core extension map. \textbf{Top
+panel --- the source-side core.} Layers~0--4 form the core dependency
+ladder: each layer is Conditional on the premises listed beside it
+and on every layer above it. \textbf{Bottom panel --- the post-core
+extension map}, \emph{not} a continuation of the ladder. The
+source-side virtual-cut algebra card extends the Layer~2 virtual-cut
+theorem: continuation across later frontiers is Conditional on that
+theorem, a wellformed source history, and the faithful
+continuation-segment premise, while restriction to a sub-scope is
+Conditional only on an existing cut and a sub-scope inclusion;
+disjoint composition, concrete
+extended-certificate verification, and raw overlap/retry
+normalization remain Future work. The destination-side sink
+extensions extend the certified clean prefix the core produces but
+require a separate sink model: ACK-only receipt and strong sink-state
+barrier convergence are Future work, and applied destination-state
+correctness is a Non-claim without a fenced, idempotent sink contract
+and visible apply-barrier evidence. When a virtual cut is obtained
+from an accepted certificate, the accepted-certificate premises and
+the external observation assumption are inherited.}
+\label{fig:theorem-ladder}

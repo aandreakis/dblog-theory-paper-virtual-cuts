@@ -1,0 +1,170 @@
+% fig05.tex -- Set A (Architectural) Figure 5: Anchor domain and
+% whole-table claim scope.
+%
+% Cleaner integrated diagram: outer scope(C) rounded rectangle with
+% generous interior; ellipse names placed ABOVE each ellipse (outside,
+% inside the rectangle); concrete keys inside each ellipse; source-log
+% axis below; four numbered conjuncts as circled numerals.
+
+\centering
+\begin{tikzpicture}[setA, x=1cm, y=1cm,
+    conjNum/.style={
+      draw=gDark, line width=0.5pt, circle, fill=gPale,
+      minimum size=4.5mm, inner sep=0pt, font=\sffamily\bfseries\scriptsize,
+      text=gDark,
+    },
+    keyDot/.style={
+      font=\sffamily\small\bfseries, text=gDark, inner sep=1pt,
+    },
+    ellOutline/.style={gDark, line width=0.5pt},
+    ellName/.style={font=\sffamily\scriptsize\bfseries, text=gDark, inner sep=1pt},
+  ]
+
+% ============================================================
+% Outer scope(C) rectangle -- taller now, more breathing room.
+% ============================================================
+\def\rectXmin{0}
+\def\rectXmax{10.20}
+\def\rectYmin{0}
+\def\rectYmax{7.3}
+\def\axisY{-1.30}
+
+\draw[gDark, line width=0.6pt, rounded corners=3pt]
+  (\rectXmin, \rectYmin) rectangle (\rectXmax, \rectYmax);
+
+% scope(C) header label, inset inside the top-left corner so the
+% rounded rectangle border draws intact behind it.
+\node[font=\sffamily\bfseries\footnotesize, anchor=north west, inner sep=4pt,
+      text=gDark]
+  at (\rectXmin+0.12, \rectYmax-0.12) {$\Scope(C)$};
+
+% ============================================================
+% Upper region: anchor-domain and touched-between ellipses.
+% Labels sit ABOVE each ellipse (still inside the rectangle).
+% ============================================================
+\def\anchorCx{3.7}
+\def\anchorCy{4.85}
+\def\touchedCx{6.5}
+\def\touchedCy{4.85}
+\def\ellRx{1.95}
+\def\ellRy{0.85}
+
+\node[ellName, anchor=south]
+  at (\anchorCx-0.65, \anchorCy+\ellRy+0.10) {anchor-domain};
+\node[ellName, anchor=south]
+  at (\touchedCx+0.65, \touchedCy+\ellRy+0.10) {touched-between};
+
+% Intersection of the two ellipses, filled with gPale to make the
+% Venn overlap visually obvious (200 sits in this lens region).
+\begin{scope}
+  \clip (\anchorCx, \anchorCy) ellipse [x radius=\ellRx, y radius=\ellRy];
+  \fill[gPale] (\touchedCx, \touchedCy) ellipse [x radius=\ellRx, y radius=\ellRy];
+\end{scope}
+
+\draw[ellOutline]
+  (\anchorCx, \anchorCy) ellipse [x radius=\ellRx, y radius=\ellRy];
+\draw[ellOutline]
+  (\touchedCx, \touchedCy) ellipse [x radius=\ellRx, y radius=\ellRy];
+
+% Keys inside the ellipses
+\node[keyDot] at (\anchorCx-1.15, \anchorCy)   {$100$};
+\node[keyDot] at ($(\anchorCx, \anchorCy)!0.5!(\touchedCx, \touchedCy)$) {$200$};
+\node[keyDot] at (\touchedCx+1.15, \touchedCy) {$300$};
+
+% Union annotation between upper and lower ellipses
+\node[font=\sffamily\scriptsize\itshape, text=gMid, anchor=center,
+      align=center, inner sep=2pt]
+  at (5.10, 3.20)
+  {union $=$ table-scope-between $= \{100, 200, 300\}$};
+
+% ============================================================
+% Lower region: replay-keys ellipse.
+% Label sits ABOVE it (inside the rectangle).
+% ============================================================
+\def\replayCx{5.10}
+\def\replayCy{1.55}
+\def\replayRx{3.2}
+\def\replayRy{0.70}
+
+\node[ellName, anchor=south]
+  at (\replayCx, \replayCy+\replayRy+0.10) {replay-keys};
+
+\draw[ellOutline]
+  (\replayCx, \replayCy) ellipse [x radius=\replayRx, y radius=\replayRy];
+
+\node[keyDot] at (\replayCx-2.10, \replayCy) {$100$};
+\node[keyDot] at (\replayCx,      \replayCy) {$200$};
+\node[keyDot] at (\replayCx+2.10, \replayCy) {$300$};
+
+% ============================================================
+% Source-log axis BELOW the rectangle.
+% ============================================================
+\draw[axisLine] (0.10, \axisY) -- (10.10, \axisY);
+\node[sublabelDim, anchor=west, inner sep=0pt]
+  at (10.20, \axisY) {source-log};
+
+\def\bX{2.60}
+\def\fX{7.60}
+\draw[axisTick] (\bX, \axisY+0.07) -- (\bX, \axisY-0.07);
+\node[font=\sffamily\scriptsize, anchor=north, inner sep=1pt]
+  at (\bX, \axisY-0.07) {$b$};
+\draw[axisTick, line width=0.8pt] (\fX, \axisY+0.10) -- (\fX, \axisY-0.10);
+\node[font=\sffamily\scriptsize\bfseries, anchor=north, inner sep=1pt]
+  at (\fX, \axisY-0.07) {$f = \Frontier(C)$};
+
+% Relation b <= f.  Lifted to y+0.30 so the conjunct-(1) leader (which
+% lands at y+0.10) clears it.
+\node[font=\sffamily\scriptsize\itshape, text=gMid, anchor=south, inner sep=2pt]
+  at ($(\bX, \axisY)!0.5!(\fX, \axisY) + (0, 0.30)$) {$b \le \Frontier(C)$};
+
+% ============================================================
+% Conjunct circled numerals.
+% ============================================================
+% (1) lifted slightly above the axis, with a leader pointing to the
+% interval between b and f (the relation, not the point b alone).
+\node[conjNum] (c1n) at (\bX-1.40, \axisY+0.45) {1};
+\draw[depFlow, line width=0.4pt]
+  (c1n.east) to[bend left=12]
+  ($(\bX, \axisY)!0.5!(\fX, \axisY) + (0, 0.10)$);
+
+% (2) upper-left, leader into anchor-domain ellipse.
+% Pinned at absolute Y=6.15 so the rectYmax bump doesn't push it
+% closer to the scope(C) header above.
+\node[conjNum] (c2n) at (\rectXmin+0.65, \rectYmax-1.15) {2};
+\draw[-{Latex[length=3pt, width=2.5pt]}, gMid, line width=0.4pt]
+  (c2n.south east) to[bend right=10] ($(\anchorCx-\ellRx, \anchorCy+0.45)$);
+
+% (3) upper-right, leader into touched-between.  Same pinning as (2).
+\node[conjNum] (c3n) at (\rectXmax-0.65, \rectYmax-1.15) {3};
+\draw[-{Latex[length=3pt, width=2.5pt]}, gMid, line width=0.4pt]
+  (c3n.south west) to[bend left=10] ($(\touchedCx+\ellRx, \touchedCy+0.45)$);
+
+% (4) lower-right, leader into replay-keys
+\node[conjNum] (c4n) at (\rectXmax-0.65, \rectYmin+0.83) {4};
+\draw[-{Latex[length=3pt, width=2.5pt]}, gMid, line width=0.4pt]
+  (c4n.north west) to[bend right=10] ($(\replayCx+\replayRx, \replayCy-0.15)$);
+
+% ============================================================
+% Header summarizing the predicate as a 4-conjunct AND.
+% Sits ABOVE the rectangle, right-aligned.
+% ============================================================
+\node[font=\sffamily\scriptsize, text=gDark, anchor=south east, align=right,
+      inner sep=2pt]
+  at (\rectXmax, \rectYmax+0.10) {%
+  \textbf{$\WholeTableClaimScope(C, H, b) \;=\;
+          (1) \land (2) \land (3) \land (4)$}};
+
+\end{tikzpicture}
+
+\caption{Anchor domain and whole-table claim scope. The four numbered
+conjuncts of $\WholeTableClaimScope(C, H, b)$ are annotated on the
+diagram; the base state $b_0$, fixed by context, is implicit in
+$\WholeTableClaimScope$ and $\AnchorDomain$. \textbf{(1)} The anchor $b$ precedes the frontier on the
+source-log axis: $b \le \Frontier(C)$.
+\textbf{(2)} $\AnchorDomain(H, b) \subseteq \Scope(C)$.
+\textbf{(3)} $\TouchedBetween(H, b, \Frontier(C)) \subseteq \Scope(C)$.
+\textbf{(4)} $\ReplayKeys(\CleanPrefix(C)) \subseteq \Scope(C)$.
+Concrete keys follow the worked example of Section~\ref{a-small-anchor-example}: $100$ sits in
+anchor-domain only, $200$ in the overlap, $300$ in touched-between
+only; replay-keys are $\{100, 200, 300\}$.}
+\label{fig:whole-table-claim-scope}

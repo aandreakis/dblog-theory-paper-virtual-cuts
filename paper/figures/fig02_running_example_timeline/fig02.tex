@@ -1,0 +1,199 @@
+% fig02.tex -- Set A (Architectural) Figure 2: Running example timeline.
+
+\centering
+\renewcommand{\ULthickness}{0.6pt}
+\begin{tikzpicture}[setA, x=1cm, y=1cm]
+
+% ============================================================
+% Coordinates (shared with Figure 3 -- running example).
+% ============================================================
+\def\xCa{1.50}
+\def\xCb{4.00}
+\def\xCc{6.50}
+\def\xCd{9.50}
+\def\xCe{15.05}                   % c_5 -- continuation-beat frontier
+\def\axisY{0}
+\def\writeY{0.85}
+\def\brackY{-0.30}
+\def\brackLabelY{-0.60}
+\def\obsY{-1.55}
+
+% ============================================================
+% State equality at the top -- the "outcome at frontier" box.
+% Two state cards side by side joined by "=".  The whole unit
+% sits above the frontier coordinate c_4 so a vertical guide
+% can rise from the axis into it.
+% ============================================================
+\def\eqY{3.55}                    % center y of the equality unit
+\def\eqX{\xCd}                    % center x at the frontier
+
+\node[font=\sffamily\Large, anchor=center] (eq) at (\eqX, \eqY) {$=$};
+
+\node[blockFill, anchor=east, text width=29mm, align=center,
+      left=4pt of eq.west, font=\sffamily\footnotesize]
+  (lbox) {%
+  \textbf{$\Apply(\CleanPrefix) \restrict K$}\\[1pt]
+  \begin{tabular}{@{\ }r@{\,:\,}l@{\ }}
+    100 & $3000$  \\
+    200 & $12000$ \\
+    300 & $3500$  \\
+  \end{tabular}};
+
+\node[block, anchor=west, text width=29mm, align=center,
+      right=4pt of eq.east, font=\sffamily\footnotesize]
+  (rbox) {%
+  \textbf{$\Src(b_0, H, f) \restrict K$}\\[1pt]
+  \begin{tabular}{@{\ }r@{\,:\,}l@{\ }}
+    100 & $3000$  \\
+    200 & $12000$ \\
+    300 & $3500$  \\
+  \end{tabular}};
+
+% scope annotation above the equality unit
+\node[sublabelDim, anchor=south] at ($(lbox.north -| eq) + (0,1.5pt)$)
+  {at frontier $f = c_4$, on scope $K = \{100, 200, 300\}$};
+
+% ============================================================
+% Frontier guide -- dotted vertical from axis into the
+% equality unit's south edge.
+% ============================================================
+\coordinate (eqSouth) at ($(eq |- lbox.south) + (0, -2pt)$);
+\draw[guide, line width=0.5pt]
+  (\xCd, \axisY) -- (eqSouth);
+
+% ============================================================
+% Source-log axis -- centered, with explicit endpoint padding.
+% ============================================================
+\draw[axisLine] (-0.10, \axisY) -- (15.65, \axisY);
+
+\foreach \x/\lab in {\xCa/c_1, \xCb/c_2, \xCc/c_3} {
+  \draw[axisTick] (\x, \axisY+0.06) -- (\x, \axisY-0.06);
+  \node[anchor=north, font=\sffamily\scriptsize, inner sep=1pt]
+    at (\x, \axisY-0.06) {$\lab$};
+}
+% Frontier tick c_4 is emphasized: heavier tick, bold label "c_4 = f".
+\draw[axisTick, line width=0.8pt] (\xCd, \axisY+0.10) -- (\xCd, \axisY-0.10);
+\node[anchor=north, font=\sffamily\scriptsize\bfseries, inner sep=1pt]
+  at (\xCd, \axisY-0.08) {$c_4 = f$};
+
+\node[sublabelDim, anchor=west, inner sep=0pt]
+  at (15.80, \axisY) {source-log};
+
+% ============================================================
+% Source-log writes above the axis -- compact pills anchored
+% at each commit coordinate.  Pills connect to the axis via a
+% short downward leader.
+% ============================================================
+\foreach \x/\op/\key/\val/\tag in {%
+  \xCa/Upd/100/$3000$/w_1,
+  \xCb/Ins/300/$2500$/w_2,
+  \xCc/Upd/200/$12000$/w_3,
+  \xCd/Upd/300/$3500$/w_4%
+} {
+  \node[pillFill, anchor=south] (w-\tag) at (\x, \writeY+0.10) {%
+    \strut\textbf{\op}~\key\\\,$\to$~\val\,};
+  \draw[guide, line width=0.35pt] (\x, \axisY+0.07) -- (\x, \writeY+0.10);
+}
+
+% ============================================================
+% Chunk-read brackets below the axis.
+% ============================================================
+% --- Chunk A at c1: observes 100 (kept) and 200 (becomes stale)
+\draw[braceMirror] (\xCa-0.65, \brackY) -- (\xCa+0.65, \brackY);
+\node[sublabel, anchor=north] (chAlab) at (\xCa, \brackLabelY)
+  {chunk $A$ at $c_1$};
+
+\node[pill, anchor=north, text width=24mm, align=left, inner xsep=4pt]
+  (chAobs) at (\xCa, \obsY) {%
+  \,$100 \to 3000$\\
+  \,\sout{$200 \to 10000$}};
+
+% --- Chunk B at c3: observes 300 (becomes stale)
+\draw[braceMirror] (\xCc-0.65, \brackY) -- (\xCc+0.65, \brackY);
+\node[sublabel, anchor=north] (chBlab) at (\xCc, \brackLabelY)
+  {chunk $B$ at $c_3$};
+
+\node[pill, anchor=north, text width=24mm, align=left, inner xsep=4pt]
+  (chBobs) at (\xCc, \obsY) {%
+  \,\sout{$300 \to 2500$}};
+
+% ============================================================
+% "Dominated by" leaders -- thin gray curves connecting each
+% stale observation row to the source-log write that supersedes
+% it.  These visually animate the strikethrough.
+% ============================================================
+% chunk-A row "200 -> 10000" is dominated by w_3 (Update 200 -> 12000)
+\draw[weakFlow, rounded corners=2pt]
+  ($(chAobs.east) + (0.05, -0.10)$)
+  to[out=15, in=-100, looseness=0.7]
+  ($(w-w_3.south) + (-0.05, 0.02)$);
+% chunk-B row "300 -> 2500" is dominated by w_4 (Update 300 -> 3500)
+\draw[weakFlow, rounded corners=2pt]
+  ($(chBobs.east) + (0.05, 0)$)
+  to[out=15, in=-100, looseness=0.7]
+  ($(w-w_4.south) + (-0.05, 0.02)$);
+
+% Labels on both leaders: "dominated by" -- placed just below each
+% dominator write so they hug the dominator, not the axis.
+\node[font=\sffamily\scriptsize\itshape, text=gMid, anchor=north,
+      inner sep=1pt, fill=white]
+  at ($(w-w_3.south) + (0, -0.06)$) {dominated by};
+\node[font=\sffamily\scriptsize\itshape, text=gMid, anchor=north,
+      inner sep=1pt, fill=white]
+  at ($(w-w_4.south) + (0, -0.06)$) {dominated by};
+
+% ============================================================
+% Continuation beat -- advancing the cut to a later frontier
+% c_5.  Drawn in a lighter register (dashed, gLight / gMid) to
+% mark the continuation phase, distinct from the solid
+% bootstrap depiction of the cut at c_4.
+% ============================================================
+
+% c_5 frontier guide -- dashed light, axis up into the c_5 card
+% (the lighter parallel of the dotted c_4 frontier guide).
+\draw[gLight, line width=0.4pt, densely dashed]
+  (\xCe, \axisY) -- (\xCe, \eqY-0.45);
+
+% c_5 source-log write pill -- dimmed (continuation phase).
+\node[pill, draw=gLight, text=gMid, anchor=south] (w-w5)
+  at (\xCe, \writeY+0.10) {\strut\textbf{Del}~200\\\,$\to$~absent\,};
+\draw[guide, gLight, line width=0.35pt]
+  (\xCe, \axisY+0.07) -- (\xCe, \writeY+0.10);
+
+% c_5 tick -- emphasized like c_4 but dimmed; label "c_5 = f'".
+\draw[axisTick, gMid, line width=0.8pt]
+  (\xCe, \axisY+0.10) -- (\xCe, \axisY-0.10);
+\node[anchor=north, font=\sffamily\scriptsize\bfseries, text=gMid,
+      inner sep=1pt] at (\xCe, \axisY-0.08) {$c_5 = f'$};
+
+% Continuation-segment bracket -- the c_4-to-c_5 source-log
+% interval, below the axis in the lighter dashed register
+% (parallel to the chunk-read brackets).
+\draw[braceMirror, draw=gLight, dashed]
+  (\xCd+0.70, \brackY) -- (\xCe-0.70, \brackY);
+\node[sublabelDim, anchor=north]
+  at ($(\xCd, \brackLabelY)!0.5!(\xCe, \brackLabelY)$)
+  {continuation segment: one CDC event};
+
+% c_5 advanced-cut card -- the lighter parallel of the c_4
+% equality unit: the same cut, advanced to the later frontier.
+\node[blockGhost, anchor=center, text width=28mm, align=center,
+      font=\sffamily\scriptsize] (c5card) at (\xCe, \eqY) {%
+  \textbf{cut advances to $f' = c_5$}\\[1.5pt]
+  no new chunk read};
+
+\end{tikzpicture}
+
+\caption{Two chunk reads at different source-log coordinates assemble
+into a replay whose state at frontier $f = c_4$ equals the source on
+scope $K = \{100, 200, 300\}$. Stale observations (strikethrough) are
+dominated by later source-log writes; no single physical read gathers
+every key in scope --- the cut is virtual, not physical.
+That is the bootstrap cut at $c_4$. The lighter elements to the right
+show the continuation beat of
+Section~\ref{continuation-beat-advancing-the-cut}: one further
+source-log event ($c_5$, a delete of account 200) is appended as the
+continuation segment for the half-open interval $(c_4, c_5]$ --- strictly
+after the frontier $c_4$ --- with no additional chunk read, advancing
+the same cut to the later frontier $f' = c_5$.}
+\label{fig:running-example-timeline}
