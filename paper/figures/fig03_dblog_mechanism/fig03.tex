@@ -141,13 +141,13 @@
 
 \end{tikzpicture}
 
-\caption{The DBLog mechanism walked through the running example. Source
-writes become \emph{CDC events} (above the axis); chunk-read rows become
+\caption{The DBLog mechanism in the running example. Source
+writes become \emph{CDC events} above the axis. Chunk-read rows become
 \emph{refresh events} (below the axis, grouped by chunk and bracketed
 by source-log watermarks). The two streams merge in source-log order
-into the \emph{raw clean prefix} below --- the list the Layer~2 theorem
-is stated about. A refresh row whose key is touched by a later source write
-is flagged \emph{dominated}; the raw clean prefix keeps it, and an
+into the \emph{raw clean prefix} below, which is the list used by the
+Layer~2 theorem. A refresh row whose key is touched by a later source
+write is marked \emph{dominated}. The raw clean prefix keeps it, and an
 optional normalized view may drop it without changing the $\Apply$
 result (\S\ref{raw-replay-and-normalized-clean-prefix}).}
 \label{fig:dblog-mechanism}
