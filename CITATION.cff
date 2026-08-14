@@ -18,7 +18,7 @@ authors:
 version: "2.1"
 date-released: "2026-08-01"
 doi: 10.5281/zenodo.20389696
-repository-code: https://github.com/aandreakis/dblog-theory-paper-virtual-cuts
+repository-code: https://github.com/aandreakis/dblog-theory-virtual-cuts-paper
 url: https://arxiv.org/abs/2605.31475
 license:
   - BSD-3-Clause
@@ -45,4 +45,4 @@ preferred-citation:
   year: 2026
   doi: 10.48550/arXiv.2605.31475
   url: https://arxiv.org/abs/2605.31475
-  notes: arXiv:2605.31475 [cs.DB]
+  notes: arXiv:2605.31475v4 [cs.DB], 13 August 2026

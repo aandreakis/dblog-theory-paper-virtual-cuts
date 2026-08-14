@@ -1,8 +1,8 @@
 # Provenance: paper versions, artifact versions, and how they line up
 
 Two objects evolve on separate clocks: the **paper** on arXiv and the **formal
-development** on Zenodo. This file records both and explains the one place they
-appear to disagree.
+development** on Zenodo. This file records both, including the historical period
+when the paper and the newest artifact version differed.
 
 ## Identifiers
 
@@ -18,7 +18,9 @@ appear to disagree.
 | Version | Date | Notes |
 |---|---|---|
 | v1 | 2026-05-29 | first posting |
-| **v2** | **2026-06-12** | current version; 31 pages, 5 figures. The sources in `paper/` are this version. |
+| v2 | 2026-06-12 | 31 pages, 5 figures; cites formal artifact 2.0 |
+| v3 | 2026-08-08 | 31 pages, 5 figures; updates the cited and ancillary formal artifact to 2.1, adopts the `Machine-checked` status label, and adds practitioner clarifications |
+| **v4** | **2026-08-13** | **current version**; 29 pages, 5 figures; readability revision with rewritten abstract, introduction, headings, and captions. The manuscript files in `paper/` are this version. |
 
 ## Artifact versions
 
@@ -33,14 +35,14 @@ Each version is also a tag in this repository: [`v1.0`](../../../tree/v1.0),
 the layout each version was published with; the corpus moved under `formal/`
 only when this repository became the paper's information hub.
 
-## The 2.0 / 2.1 question
+## The 2.0 / 2.1 history
 
-**The paper cites artifact version 2.0** (`10.5281/zenodo.20652511`) — printed
-twice in the body and once in the bibliography of arXiv v2. **No version of the
-paper references 2.1**, which was published on 2026-08-01, seven weeks after
-arXiv v2 went up on 2026-06-12. Following the paper's DOI lands on 2.0; this
-repository ships 2.1. That is not a discrepancy, and here is exactly what
-differs.
+ArXiv v2 cites artifact version 2.0 (`10.5281/zenodo.20652511`), which was the
+current deposit when v2 was posted on 2026-06-12. Artifact 2.1 was published on
+2026-08-01. ArXiv v3 and v4 cite version 2.1, and both carry
+`DBLog_Virtual_Cuts-2.1` as an ancillary directory. The `formal/` tree in this
+repository is byte-identical to that v4 ancillary and to the version 2.1 Zenodo
+deposit.
 
 An external review of the 2.0 artifact found that one negative control in the
 Layer 3 fixtures was **vacuous**: the same-evidence control failed to
@@ -55,9 +57,10 @@ Version 2.1 makes two changes and no others:
 2. a new kernel-checked theory `Layer3_Defect_Regressions.thy` pins that
    reachability permanently, so the defect cannot silently return.
 
-The nine headline theorem statements are identical across 2.0 and 2.1. A reader
-comparing the paper's cited DOI with this repository will find version 2.1 and
-should expect exactly this difference.
+The nine headline theorem statements are identical across 2.0 and 2.1. Readers
+of arXiv v2 should expect the repaired fixture and regression theory when they
+compare its cited artifact with this repository. Readers of arXiv v3 or v4 see
+the same 2.1 corpus in the paper ancillary, Zenodo deposit, and `formal/` tree.
 
 ## Which identifier to cite
 

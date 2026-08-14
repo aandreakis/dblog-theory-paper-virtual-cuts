@@ -19,10 +19,10 @@ Snapshot-Equivalent Replay of Live Databases”** (Andreas Andreakis, 2026,
 object of the DBLog change-data-capture backfill mechanism: a **certified
 virtual cut**, a finite bundle of CDC events and chunk reads whose replay
 reaches the same per-key state as the source at a chosen frontier on a chosen
-key scope. Nine headline theorems are machine-checked in Isabelle/HOL, each
-conditional on premises stated in its own statement. (The development's other
-theorems are closed witnesses and fixtures; they exercise the definitions and
-guard against vacuity.)
+key scope. Nine headline theorems are machine-checked in Isabelle/HOL under the
+premises stated in their own statements. (The development's other theorems are
+closed witnesses and fixtures; they exercise the definitions and guard against
+vacuity.)
 
 ## 2. Source precedence
 
@@ -46,7 +46,7 @@ statement in `formal/`.
 |---|---|---|---|
 | `formal/*.thy`, `formal/ROOT`, `formal/document/` | Isabelle/HOL session `DBLog_Virtual_Cuts`, 38 theories | yes, for proofs | **no — byte-frozen** |
 | `formal/README.md` | artifact README (theory-by-theory) | yes, for artifact description | no |
-| `paper/main.tex`, `paper/refs.bib`, `paper/figures/` | arXiv v2 sources | yes, for the paper | only by the author |
+| `paper/main.tex`, `paper/refs.bib`, `paper/figures/` | arXiv v4 sources | yes, for the paper | only by the author |
 | `paper/*.pdf` | built paper | yes | no |
 | `docs/THEOREMS.md` | verbatim theorem statements, premises, non-claims | no (derived) | yes, by the author |
 | `docs/PROVENANCE.md` | paper/artifact version history and DOIs | no (derived) | yes, by the author |
@@ -62,9 +62,11 @@ statement in `formal/`.
    reproduction; artifact defects are fixed by publishing a new version, not by
    patching this tree.
 2. **Never state a theorem without its premises.** Every one of the nine
-   headline results is conditional. “DBLog is correct” is not a claim this work
-   makes; “under the wellformed-run premises, the clean prefix of a DBLog run
-   replays to the source state at its frontier on its scope” is.
+   headline results is premise-bearing. “DBLog is correct” is not a claim this
+   work makes; “under the wellformed-run premises, the clean prefix of a DBLog
+   run replays to the source state at its frontier on its scope” is. Use the
+   paper's status label **Machine-checked**, not the retired label
+   `Conditional`.
 3. **Never claim the work verifies an implementation.** It models a mechanism.
    Debezium, Apache Flink CDC, and Netflix's DBLog implement that mechanism;
    none of them is verified here.
@@ -147,7 +149,7 @@ Correct these if you see them, including in your own drafts.
 
 | Misreading | Correction |
 |---|---|
-| “Proves DBLog is correct.” | Proves conditional properties of a *model* of the mechanism, under stated premises. |
+| “Proves DBLog is correct.” | Proves properties of a *model* of the mechanism under stated premises. |
 | “Proves exactly-once delivery.” | Delivery is out of scope. No theorem is a delivery claim. |
 | “Guarantees the sink converges.” | Destination-side convergence needs a separate sink model; the paper marks it future work and a non-claim. |
 | “Verifies Debezium / Flink CDC / Netflix's implementation.” | No implementation is verified. Those systems implement the same mechanism. |
@@ -187,21 +189,21 @@ conservative extension over a provably non-empty set with `linorder` and
 
 | Object | Identifier |
 |---|---|
-| Paper | arXiv:2605.31475 — v1 29 May 2026, **v2 12 Jun 2026** (current). 31 pages, cs.DB + cs.LO, CC BY 4.0. |
+| Paper | arXiv:2605.31475 — v1 29 May, v2 12 Jun, v3 8 Aug, **v4 13 Aug 2026** (current). 29 pages, cs.DB + cs.LO, CC BY 4.0. |
 | Artifact, latest | Zenodo `10.5281/zenodo.21732790` (version 2.1, 1 Aug 2026), repo tag `v2.1` |
 | Artifact, concept DOI | `10.5281/zenodo.20389696` — always resolves to the newest version |
 | Artifact, earlier | `10.5281/zenodo.20652511` (2.0) · `10.5281/zenodo.20389697` (1.0) |
 | Prior work | 2020 DBLog paper arXiv:2010.12597; Netflix Tech Blog, Dec 2019 |
 
-**The paper cites artifact version 2.0** and only that: `10.5281/zenodo.20652511`
-appears twice in the body of arXiv v2 and once in its bibliography. **No version
-of the paper references 2.1** — 2.1 was published 2026-08-01, after arXiv v2 of
-2026-06-12. Version 2.1 repairs a Layer 3 negative control that failed to
-materialize its run (a vacuous control found by external review) and adds a
-regression theory pinning the repair. **The nine headline theorem statements
-are unchanged**; the repaired control's own statement is strictly strengthened.
-If you are reconciling the paper's DOI with the current deposit, this is the
-reason — not a discrepancy. Do not describe the paper as citing 2.1.
+ArXiv v2 cites artifact 2.0 (`10.5281/zenodo.20652511`). ArXiv v3 and v4 cite
+artifact 2.1 (`10.5281/zenodo.21732790`) and carry the same 2.1 corpus as an
+ancillary directory. The repository's `formal/` tree is byte-identical to that
+v4 ancillary and the Zenodo deposit. Version 2.1 repairs a Layer 3 negative
+control that failed to materialize its run (a vacuous control found by external
+review) and adds a regression theory pinning the repair. **The nine headline
+theorem statements are unchanged**; the repaired control's own statement is
+strictly strengthened. Do not describe v2 as citing 2.1, or v3/v4 as citing
+2.0.
 
 BibTeX entries for both objects are in [`README.md`](README.md#citing) and
 machine-readable metadata is in [`CITATION.cff`](CITATION.cff).

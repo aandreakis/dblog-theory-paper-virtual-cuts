@@ -135,13 +135,13 @@
 \node[font=\sffamily\scriptsize, anchor=center, text=gMid,
       align=center, inner sep=1pt]
   at (3.25, 0.55)
-  {\emph{no single line};\\ outcomes match at $f$};
+  {\emph{no single line}\\ outcomes match at $f$};
 
 % Subtitle below the axis
 \node[font=\sffamily\scriptsize\itshape, text=gDark, anchor=north,
       align=center, text width=58mm]
   at (3.25, -0.90)
-  {chunk reads at distinct coordinates;\\
+  {chunk reads at distinct coordinates\\
    replay-at-frontier $=$ source-at-frontier on scope $K$};
 
 \end{scope}
@@ -150,10 +150,10 @@
 
 \caption{Physical cut vs.\ virtual cut. \emph{Left:} a physical cut
 requires a single source-log coordinate at which every key in scope is
-observed --- a monolithic vertical line. DBLog does \emph{not} produce
-one; the values shown are the counterfactual ``if it did'' outcome on
-$K$. \emph{Right:} a virtual cut requires only that replay-at-frontier
-equal source-at-frontier on the chosen scope; the chunk reads (as in
+observed, shown as a single vertical line. DBLog does \emph{not} produce
+one. The values shown are the counterfactual outcome on $K$. \emph{Right:}
+a virtual cut requires replay at the frontier to equal the source at
+the frontier on the chosen scope. The chunk reads (as in
 Figure~\ref{fig:running-example-timeline}) sit at distinct earlier
 coordinates, no single line gathers them, and the equality lives in
 outcome space rather than time space.}

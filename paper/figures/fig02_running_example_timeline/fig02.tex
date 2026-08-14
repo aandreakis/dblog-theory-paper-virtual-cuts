@@ -187,13 +187,13 @@
 \caption{Two chunk reads at different source-log coordinates assemble
 into a replay whose state at frontier $f = c_4$ equals the source on
 scope $K = \{100, 200, 300\}$. Stale observations (strikethrough) are
-dominated by later source-log writes; no single physical read gathers
-every key in scope --- the cut is virtual, not physical.
+dominated by later source-log writes. No single physical read gathers
+every key in scope, so the cut is virtual rather than physical.
 That is the bootstrap cut at $c_4$. The lighter elements to the right
-show the continuation beat of
+show the continuation of
 Section~\ref{continuation-beat-advancing-the-cut}: one further
 source-log event ($c_5$, a delete of account 200) is appended as the
-continuation segment for the half-open interval $(c_4, c_5]$ --- strictly
-after the frontier $c_4$ --- with no additional chunk read, advancing
+continuation segment for the half-open interval $(c_4, c_5]$. It begins
+strictly after the frontier $c_4$ and requires no additional chunk read. This advances
 the same cut to the later frontier $f' = c_5$.}
 \label{fig:running-example-timeline}

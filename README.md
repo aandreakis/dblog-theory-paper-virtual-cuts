@@ -3,7 +3,7 @@
 ### Certified Virtual Cuts for a Snapshot-Equivalent Replay of Live Databases
 
 [![Paper (arXiv)](https://img.shields.io/badge/paper-arXiv%3A2605.31475-b31b1b)](https://arxiv.org/abs/2605.31475)
-[![Artifact DOI](https://img.shields.io/badge/artifact-10.5281%2Fzenodo.20389696-1682D4)](https://doi.org/10.5281/zenodo.20389696)
+[![Artifact 2.1 DOI](https://img.shields.io/badge/artifact-10.5281%2Fzenodo.21732790-1682D4)](https://doi.org/10.5281/zenodo.21732790)
 
 This repository is the information hub for the paper **“A Theoretical Study of
 DBLog: Certified Virtual Cuts for a Snapshot-Equivalent Replay of Live
@@ -13,7 +13,7 @@ development**, and a plain-language account of what the work proves and what it
 deliberately does not.
 
 **Quick links** — [read the paper](https://arxiv.org/abs/2605.31475) ·
-[archived artifact](https://doi.org/10.5281/zenodo.20389696) ·
+[archived artifact](https://doi.org/10.5281/zenodo.21732790) ·
 [what is proved](#what-is-proved--and-what-is-not) ·
 [the nine theorems](#main-results) ·
 [run the proofs](#run-the-proofs) ·
@@ -35,6 +35,9 @@ post](https://netflixtechblog.com/dblog-a-generic-change-data-capture-framework-
 and the [2020 DBLog paper](https://arxiv.org/abs/2010.12597), and is now used in
 [Debezium](https://debezium.io/blog/2021/10/07/incremental-snapshots/) and
 [Apache Flink CDC](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.6/docs/connectors/flink-sources/mysql-cdc/#how-incremental-snapshot-reading-works).
+DBLog keeps source impact small and allows work to pause between chunks, but a
+conventional dump or blocking snapshot may be the better choice when finishing
+the backfill as quickly as possible has priority.
 
 The 2020 paper described the mechanism operationally. It never said what
 *correct* means for such a run, so there was nothing to prove. **This paper
@@ -78,7 +81,7 @@ wellformedness obligations. Proved in Isabelle/HOL down to the definitions,
 with no axioms, and exhibited on constructed witnesses that show it is not
 vacuous.
 
-**Proved** — each result under the premises its own statement names:
+**Machine-checked** — each result under the premises its own statement names:
 
 - The clean prefix of a wellformed DBLog run *is* a virtual cut: replaying it
   reproduces the source state at the run's frontier, on the run's scope.
@@ -159,7 +162,7 @@ Full statements, premises and per-theorem “what this does *not* say” notes:
 
 | Path | What it is |
 |---|---|
-| [`paper/`](paper/) | LaTeX sources of the paper, exactly as submitted to arXiv (v2), plus the built PDF. |
+| [`paper/`](paper/) | Manuscript files from the exact arXiv v4 source bundle, plus arXiv's built PDF. |
 | [`formal/`](formal/) | The Isabelle/HOL development — **byte-identical to the archived Zenodo artifact**. Do not edit; see [below](#verify-this-repository-against-the-archived-artifact). |
 | [`formal/README.md`](formal/README.md) | The artifact's own README: theory-by-theory contents, witnesses and fixtures, release metadata. |
 | [`docs/`](docs/) | [Theorem index](docs/THEOREMS.md) with verbatim statements and premises; [provenance](docs/PROVENANCE.md) of paper and artifact versions. |
@@ -168,9 +171,9 @@ Full statements, premises and per-theorem “what this does *not* say” notes:
 
 ## Read the paper
 
-- **arXiv:** [abs](https://arxiv.org/abs/2605.31475) · [PDF](https://arxiv.org/pdf/2605.31475) — 31 pages, 5 figures, cs.DB + cs.LO, CC BY 4.0.
-- **In this repository:** [`paper/dblog_virtual_cuts_v2.pdf`](paper/dblog_virtual_cuts_v2.pdf)
-  — arXiv's own build of v2, carrying its margin stamp.
+- **arXiv v4:** [abs](https://arxiv.org/abs/2605.31475v4) · [PDF](https://arxiv.org/pdf/2605.31475v4) — 29 pages, 5 figures, cs.DB + cs.LO, CC BY 4.0.
+- **In this repository:** [`paper/dblog_virtual_cuts_v4.pdf`](paper/dblog_virtual_cuts_v4.pdf)
+  — arXiv's own build of v4, carrying its margin stamp.
 - **Build it yourself:**
 
   ```bash
@@ -215,24 +218,19 @@ convenience mirror plus the surrounding context.
 
 | | Paper | Formal development |
 |---|---|---|
-| Current | [arXiv:2605.31475v2](https://arxiv.org/abs/2605.31475) (12 Jun 2026) | `2.1` — [10.5281/zenodo.21732790](https://doi.org/10.5281/zenodo.21732790), repo tag [`v2.1`](../../tree/v2.1) |
-| Previous | v1 (29 May 2026) | `2.0` — [10.5281/zenodo.20652511](https://doi.org/10.5281/zenodo.20652511), tag [`v2.0`](../../tree/v2.0) · `1.0` — [10.5281/zenodo.20389697](https://doi.org/10.5281/zenodo.20389697), tag [`v1.0`](../../tree/v1.0) |
+| Current | [arXiv:2605.31475v4](https://arxiv.org/abs/2605.31475v4) (13 Aug 2026) | `2.1` — [10.5281/zenodo.21732790](https://doi.org/10.5281/zenodo.21732790), repo tag [`v2.1`](../../tree/v2.1) |
+| Previous | [v3](https://arxiv.org/abs/2605.31475v3) (8 Aug 2026) · [v2](https://arxiv.org/abs/2605.31475v2) (12 Jun 2026) · [v1](https://arxiv.org/abs/2605.31475v1) (29 May 2026) | `2.0` — [10.5281/zenodo.20652511](https://doi.org/10.5281/zenodo.20652511), tag [`v2.0`](../../tree/v2.0) · `1.0` — [10.5281/zenodo.20389697](https://doi.org/10.5281/zenodo.20389697), tag [`v1.0`](../../tree/v1.0) |
 | Always-latest DOI | — | [10.5281/zenodo.20389696](https://doi.org/10.5281/zenodo.20389696) (concept DOI) |
 
-**The paper does not point at version 2.1.** The current paper, arXiv v2 of
-12 June 2026, prints one artifact DOI — `10.5281/zenodo.20652511`, **version
-2.0** — twice in the body and once in the bibliography. Version 2.1 was
-published on 1 August 2026, after that posting, so no version of the paper
-references it.
+ArXiv v4 cites formal artifact 2.1 and carries `DBLog_Virtual_Cuts-2.1` as an
+ancillary directory. That ancillary, the Zenodo 2.1 deposit, and this
+repository's `formal/` tree are byte-identical.
 
-Following the paper's DOI therefore lands on 2.0, while this repository ships
-2.1. The difference is one repair and nothing else: a Layer 3 negative control
-that failed to materialize its run, so the comparison it advertised was never
-exercised (found by an external review), plus a kernel-checked regression theory
-pinning that reachability. **The nine headline theorem statements are
-unchanged** — the repaired control's own statement is strictly strengthened —
-and the paper's claims are unaffected, which is why the paper was not revised
-for it.
+Historically, arXiv v2 cited artifact 2.0. Version 2.1 repaired one Layer 3
+negative control that failed to materialize its run and added a kernel-checked
+regression theory. **The nine headline theorem statements are unchanged**; the
+repaired control's own statement is strictly strengthened. ArXiv v3 and v4
+cite and include the repaired 2.1 corpus.
 
 The **concept DOI** `10.5281/zenodo.20389696` always resolves to the newest
 version; the **version DOIs** name exact bytes. Cite the version DOI when the

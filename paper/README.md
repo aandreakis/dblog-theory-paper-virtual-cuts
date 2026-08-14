@@ -1,9 +1,9 @@
 # Paper sources
 
-LaTeX sources of **“A Theoretical Study of DBLog: Certified Virtual Cuts for a
-Snapshot-Equivalent Replay of Live Databases”**, exactly as submitted to arXiv
-for version 2 ([arXiv:2605.31475](https://arxiv.org/abs/2605.31475),
-12 June 2026).
+Manuscript files from the exact source bundle of **“A Theoretical Study of
+DBLog: Certified Virtual Cuts for a Snapshot-Equivalent Replay of Live
+Databases”**, arXiv version 4
+([arXiv:2605.31475v4](https://arxiv.org/abs/2605.31475v4), 13 August 2026).
 
 | File | Contents |
 |---|---|
@@ -11,7 +11,7 @@ for version 2 ([arXiv:2605.31475](https://arxiv.org/abs/2605.31475),
 | `refs.bib` | bibliography source |
 | `main.bbl` | the bibliography as submitted (arXiv builds from the `.bbl`) |
 | `figures/fig0{1..5}_*/fig0N.tex` | the five figures, TikZ sources included by `main.tex` |
-| `dblog_virtual_cuts_v2.pdf` | arXiv's own build of this source, carrying the `arXiv:2605.31475v2 [cs.DB] 12 Jun 2026` margin stamp |
+| `dblog_virtual_cuts_v4.pdf` | arXiv's own build of this source, carrying the `arXiv:2605.31475v4 [cs.DB] 13 Aug 2026` margin stamp |
 
 ## Building
 
@@ -24,12 +24,12 @@ shared palette and `tikzset` defined in the preamble of `main.tex`.
 
 ## Differences from the arXiv submission tarball
 
-One omission: the submitted tarball carries the formal development a second
-time, as an ancillary directory `anc/dblog_virtual_cuts_formal/` of 42 files.
-It is left out here for two reasons — the development lives in
-[`../formal/`](../formal/) in full, byte-identical to its archived Zenodo
-deposit, and the ancillary copy is the **2.0** corpus (37 theories), the version
-current when the paper was posted, whereas `../formal/` is 2.1.
+The arXiv bundle also carries processing metadata (`00README.json`) and the
+formal development as the 43-file ancillary directory
+`anc/DBLog_Virtual_Cuts-2.1/`. They are not duplicated here: the development
+lives in [`../formal/`](../formal/) and is byte-identical to both the v4
+ancillary and the archived version 2.1 Zenodo deposit
+([10.5281/zenodo.21732790](https://doi.org/10.5281/zenodo.21732790)).
 
 ## Licence
 

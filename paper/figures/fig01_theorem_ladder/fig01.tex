@@ -46,11 +46,11 @@
 
 % ============================================================
 % PANEL A -- the source-side core: the theorem ladder.
-% Layers 0--4, each rung Conditional and depending on the rung
-% above it.
+% Layers 0--4, each rung machine-checked under its premises and
+% depending on the rung above it.
 % ============================================================
 \node[panelHd] (hdA) at (-5.5mm,10mm)
-  {The theorem ladder \textemdash\ source-side core (Layers 0--4)};
+  {The theorem ladder: source-side core (Layers 0--4)};
 
 % --- LAYER 0/1 (two formal layers folded into one row) ---
 \node[ladderChip] (c01) at (0,0) {0\,/\,1};
@@ -59,9 +59,9 @@
   Defines $\WellformedRun$ (source-log retention, frontier discipline,
   watermark consistency, chunk-read honesty).};
 \node[ladderNote,  right=2mm   of s01]              (n01)                      {%
-  Conditional on the wellformed-run model.\\
+  Premises: the wellformed-run model.\\
   WF carries the source-side observation\\
-  obligations; the certificate's external-\\
+  obligations. The certificate's external-\\
   observation premise enters at Layer 3.};
 
 % --- LAYER 2 ---
@@ -71,7 +71,7 @@
   $\WellformedRun \Rightarrow$ replay at frontier equals source on the
   run scope.};
 \node[ladderNote,  right=2mm   of s2]                        (n2)              {%
-  Same premises as L0/1; no \emph{new}\\
+  Same premises as L0/1. No \emph{new}\\
   assumptions (external observation\\
   is already inherited).};
 
@@ -82,7 +82,7 @@
   $\Verify(C{,}E)=\Accept \,\land\, \FaithfulSourceObservation \,\land\,$
   checker substrate $\Rightarrow \VirtualCut(C, H)$.};
 \node[ladderNote,  right=2mm   of s3]                        (n3)              {%
-  Conditional on Layer 2 $+$\\
+  Premises: Layer 2 $+$\\
   checker-substrate obligations $+$\\
   External observation assumption.};
 
@@ -93,7 +93,7 @@
   $\VirtualCut(C, H) \,\land\, \WholeTableClaimScope(C, H, b) \Rightarrow$
   unrestricted equality on the table at the frontier.};
 \node[ladderNote,  right=2mm   of s4]                        (n4)              {%
-  Conditional on Layer 3 $+$\\
+  Premises: Layer 3 $+$\\
   $\WholeTableClaimScope(C, H, b)$.};
 
 % Dependency spine: lower depends on upper.
@@ -118,7 +118,7 @@
 % rungs. Each card carries per-item status chips.
 % ============================================================
 \node[panelHd, anchor=north west] (hdB) at ($(divL) + (0,-4mm)$)
-  {Post-core extension map \textemdash\ independent extensions, \emph{not} ladder rungs};
+  {Post-core extension map: independent extensions, \emph{not} ladder rungs};
 
 % --- Card 1: source-side virtual-cut algebra (extends Layer 2) ---
 \node[cardTtl, anchor=north west] (a-ttl) at ($(hdB.south west) + (1.5mm,-3.5mm)$)
@@ -126,29 +126,29 @@
 \node[cardAtt, anchor=north west] (a-att) at ([yshift=-0.8mm]a-ttl.south west)
   {Extends the Layer~2 virtual-cut theorem.};
 \node[chipNow, anchor=north west] (a-c1) at ([yshift=-1.5mm]a-att.south west)
-  {Conditional};
+  {Machine-checked};
 \node[cardTxt, anchor=north west] (a-d1) at ([yshift=-0.8mm]a-c1.south west)
-  {Continuation across frontiers; restriction to a sub-scope.};
+  {Continuation across frontiers and restriction to a sub-scope.};
 \node[chipFut, anchor=north west] (a-c2) at ([yshift=-1.6mm]a-d1.south west)
   {Future work};
 \node[cardTxtG, anchor=north west] (a-d2) at ([yshift=-0.8mm]a-c2.south west)
-  {Disjoint composition; concrete extended-certificate verification;
-   raw overlap/retry normalization.};
+  {Disjoint composition, concrete extended-certificate verification,
+   and raw overlap/retry normalization.};
 
 % --- Card 2: destination-side sink extensions (extend the certified prefix) ---
 \node[cardTtl, anchor=north west] (b-ttl) at ($(a-ttl.north west) + (72mm,0)$)
   {Destination-side sink extensions};
 \node[cardAtt, anchor=north west] (b-att) at ([yshift=-0.8mm]b-ttl.south west)
-  {Extend the core's certified clean prefix; need a separate sink model.};
+  {Extend the core's certified clean prefix with a separate sink model.};
 \node[chipFut, anchor=north west] (b-c1) at ([yshift=-1.5mm]b-att.south west)
   {Future work, Non-claim};
 \node[cardTxtG, anchor=north west] (b-d1) at ([yshift=-0.8mm]b-c1.south west)
-  {ACK-only receipt; stream-prefix correctness. Applied destination
+  {ACK-only receipt and stream-prefix correctness. Applied destination
    state is a Non-claim.};
 \node[chipFut, anchor=north west] (b-c2) at ([yshift=-1.6mm]b-d1.south west)
   {Future work};
 \node[cardTxtG, anchor=north west] (b-d2) at ([yshift=-0.8mm]b-c2.south west)
-  {Strong sink-state barrier convergence; needs a fenced, idempotent
+  {Strong sink-state barrier convergence needs a fenced, idempotent
    sink contract and visible apply-barrier evidence.};
 
 % Card background boxes (drawn behind the content).
@@ -161,24 +161,12 @@
 
 \end{tikzpicture}
 
-\caption{Theorem ladder and post-core extension map. \textbf{Top
-panel --- the source-side core.} Layers~0--4 form the core dependency
-ladder: each layer is Conditional on the premises listed beside it
-and on every layer above it. \textbf{Bottom panel --- the post-core
-extension map}, \emph{not} a continuation of the ladder. The
-source-side virtual-cut algebra card extends the Layer~2 virtual-cut
-theorem: continuation across later frontiers is Conditional on that
-theorem, a wellformed source history, and the faithful
-continuation-segment premise, while restriction to a sub-scope is
-Conditional only on an existing cut and a sub-scope inclusion;
-disjoint composition, concrete
-extended-certificate verification, and raw overlap/retry
-normalization remain Future work. The destination-side sink
-extensions extend the certified clean prefix the core produces but
-require a separate sink model: ACK-only receipt and strong sink-state
-barrier convergence are Future work, and applied destination-state
-correctness is a Non-claim without a fenced, idempotent sink contract
-and visible apply-barrier evidence. When a virtual cut is obtained
-from an accepted certificate, the accepted-certificate premises and
-the external observation assumption are inherited.}
+\caption{Theorem ladder and extensions. Layers~0--4 form the
+source-side core, with each layer using the premises of the layers above
+it. Continuation and scope restriction extend the Layer~2 virtual-cut
+result. Disjoint composition, extended-certificate verification, and
+overlap/retry normalization remain Future work. Destination-state
+results require a separate sink model. A cut obtained from an accepted
+certificate retains the certificate assumptions and faithful-source
+observation premise.}
 \label{fig:theorem-ladder}
