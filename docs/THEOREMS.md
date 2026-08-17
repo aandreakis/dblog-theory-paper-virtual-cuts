@@ -273,7 +273,18 @@ hypothesis does not narrow the intended interpretation.
 ## Finding things yourself
 
 ```bash
-grep -rn "^theorem " formal/*.thy          # every theorem in the development
-grep -rn "sorry\|oops\|axiomatization" formal/*.thy   # nothing admitted
-isabelle build -d formal DBLog_Virtual_Cuts           # full check (Isabelle2025-2)
+# every theorem in the development
+grep -rn "^theorem " formal/*.thy
+
+# nothing admitted - empty output means clean
+grep -rEn "^\s*(sorry|oops|axiomatization|typedecl|consts)\b" formal/*.thy
+
+# full check (Isabelle2025-2)
+isabelle build -d formal DBLog_Virtual_Cuts
 ```
+
+The second grep anchors to command position on purpose. The word
+`axiomatization` occurs in two documentation passages of
+`formal/Source_History.thy` — both saying that none is used — so an unanchored
+search reports those prose lines and appears to contradict the claim it is
+meant to check.
