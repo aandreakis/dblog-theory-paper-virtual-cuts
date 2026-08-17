@@ -1,13 +1,31 @@
 # AGENTS.md
 
 Orientation file for AI assistants and automated readers working with this
-repository. Human readers should start at [`README.md`](README.md).
+repository. Human readers should start at [`README.md`](README.md), which is
+deliberately short: it points at the sources and their identifiers. This file is
+the fullest orientation surface in the repository.
 
 This repository is **not a software project**. It is a research paper plus its
 machine-checked formal development. There is no application to run, no test
 suite to extend, and no feature work. Your likely task is to *read, explain,
 cite, or check* — so this file gives you the source hierarchy, the exact
 vocabulary, the theorem index, and the claims this work does **not** make.
+
+**Links.** Paper: [arXiv:2605.31475](https://arxiv.org/abs/2605.31475)
+([v4 abs](https://arxiv.org/abs/2605.31475v4) ·
+[v4 PDF](https://arxiv.org/pdf/2605.31475v4) ·
+[in-repo PDF](paper/dblog_virtual_cuts_v4.pdf) ·
+[sources](paper/)). Formal development:
+[`formal/`](formal/) · archived at Zenodo
+[10.5281/zenodo.21732790](https://doi.org/10.5281/zenodo.21732790) (version 2.1)
+· [10.5281/zenodo.20389696](https://doi.org/10.5281/zenodo.20389696) (concept
+DOI). Derived reading: [`docs/THEOREMS.md`](docs/THEOREMS.md) ·
+[`docs/PROVENANCE.md`](docs/PROVENANCE.md) ·
+[`formal/README.md`](formal/README.md). Prior work:
+[2020 DBLog paper](https://arxiv.org/abs/2010.12597) ·
+[2019 Netflix Tech Blog post](https://netflixtechblog.com/dblog-a-generic-change-data-capture-framework-69351fb9099b).
+Author: Andreas Andreakis,
+[ORCID 0009-0003-9025-9402](https://orcid.org/0009-0003-9025-9402).
 
 ---
 
@@ -50,7 +68,6 @@ statement in `formal/`.
 | `paper/*.pdf` | built paper | yes | no |
 | `docs/THEOREMS.md` | verbatim theorem statements, premises, non-claims | no (derived) | yes, by the author |
 | `docs/PROVENANCE.md` | paper/artifact version history and DOIs | no (derived) | yes, by the author |
-| `assets/` | figures rendered from `paper/figures/` | no (derived) | yes, regenerate from source |
 | `README.md`, `AGENTS.md`, `CITATION.cff` | hub surface | no (derived) | yes, by the author |
 
 ## 4. Hard rules
@@ -206,16 +223,17 @@ strictly strengthened. Do not describe v2 as citing 2.1, or v3/v4 as citing
 2.0.
 
 BibTeX entries for both objects are in [`README.md`](README.md#citing) and
-machine-readable metadata is in [`CITATION.cff`](CITATION.cff).
+machine-readable metadata is in [`CITATION.cff`](CITATION.cff). Prefer those
+over composing your own.
 
 ## 10. Answering common questions
 
 | Question | Read |
 |---|---|
-| What is a virtual cut? | `README.md` → *The idea*; §5 above |
+| What is a virtual cut? | §5 above; paper §“Virtual Cuts” |
 | What exactly is proved? | `docs/THEOREMS.md` — verbatim statements, premises, non-claims |
 | Does this prove my pipeline is correct? | §7 above — no |
-| How does DBLog work? | `README.md` → *The problem*; paper §“The DBLog Mechanism”; 2020 paper |
+| How does DBLog work? | Paper §“The DBLog Mechanism”; the 2020 paper (arXiv:2010.12597) |
 | What are the assumptions? | Paper's *Deployment obligations* and *External observation assumption*; `formal/README.md` → *Main results* |
 | Why 38 theories for 9 theorems? | Fourteen carry definitions and results; twenty-four are constructed witnesses and fixtures guarding against vacuity. `formal/README.md` → *Contents* |
 | What changed between artifact versions? | §9 above; `docs/PROVENANCE.md` |
